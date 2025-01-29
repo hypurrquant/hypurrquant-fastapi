@@ -5,9 +5,6 @@ setup(
     version="0.0.1",  # 버전
     author="NOH YUSEONG",
     author_email="shdbtjd8@gmail.com",
-    description="Common utilities for FastAPI microservices",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
     packages=find_packages(),  # 현재 디렉토리에서 패키지 찾기
     install_requires=[
         "aiohappyeyeballs==2.4.4",
