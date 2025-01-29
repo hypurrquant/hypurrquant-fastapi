@@ -1,10 +1,9 @@
 import aiohttp
-from typing import Any, Dict, Optional
-from typing import Optional
-from fastapi_core.logging_config import configure_logging
-from fastapi_core.response import BaseResponse
-from fastapi_core.api.exception import get_exception_by_code
-from fastapi_core.exception import BaseOrderException
+from typing import Any, Dict, Optional, Optional
+from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.response import BaseResponse
+from hypurrquant_fastapi_core.api.exception import get_exception_by_code
+from hypurrquant_fastapi_core.exception import BaseOrderException
 
 logger = configure_logging(__file__)
 

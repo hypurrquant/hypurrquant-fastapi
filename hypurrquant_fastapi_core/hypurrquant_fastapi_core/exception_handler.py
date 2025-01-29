@@ -1,9 +1,12 @@
-from fastapi_core.exception import BaseOrderException, ApiLimitExceededException
+from hypurrquant_fastapi_core.exception import (
+    BaseOrderException,
+    ApiLimitExceededException,
+)
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from logging_config import configure_logging
-from fastapi_core.response import BaseResponse
+from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.response import BaseResponse
 from hyperliquid.utils.error import ClientError, ServerError
 from pymongo.errors import PyMongoError
 import aiohttp

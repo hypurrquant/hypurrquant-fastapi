@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Any, Optional
-from logging_config import configure_logging
+from hypurrquant_fastapi_core.logging_config import configure_logging
 from fastapi.responses import JSONResponse
 
 logger = configure_logging(__name__)

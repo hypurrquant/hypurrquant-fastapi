@@ -1,4 +1,7 @@
-from fastapi_core.exception import BaseOrderException, UnhandledErrorException
+from hypurrquant_fastapi_core.exception import (
+    BaseOrderException,
+    UnhandledErrorException,
+)
 
 
 class ApiLimitExceededException(BaseOrderException):
