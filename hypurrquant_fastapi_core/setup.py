@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="hypurrrquant_fastapi_core",  # 패키지 이름
+    name="hypurrquant_fastapi_core",  # 패키지 이름
     version="0.0.1",  # 버전
     author="NOH YUSEONG",
     author_email="shdbtjd8@gmail.com",
