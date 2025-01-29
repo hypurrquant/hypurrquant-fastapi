@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from hypurrquant_fastapi_core.logging_config import configure_logging
+from pydantic import BaseModel, Field, field_validator, ValidationInfo
 import math
 from typing import Dict
 
