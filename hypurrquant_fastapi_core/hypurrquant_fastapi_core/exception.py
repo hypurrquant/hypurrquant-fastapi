@@ -262,6 +262,21 @@ class InsufficientPerpBalanceException(BaseOrderException):
         super().__init__(message, 3009, api_response, status_code)
 
 
+class NoSuchAccountByProvidedPublicKey(BaseOrderException):
+    """
+    주어진 public key를 가진 계좌가 없다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 3010, api_response)
+
+
 class InsufficientBalanceException(BaseOrderException):
     """
     주문하는 금액이 10USDC 미만인 경우에 발생한다.
