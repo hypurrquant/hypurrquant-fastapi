@@ -277,6 +277,21 @@ class NoSuchAccountByProvidedPublicKey(BaseOrderException):
         super().__init__(response, 3010, api_response)
 
 
+class RebalanceAccountAlreadyExistsException(BaseOrderException):
+    """
+    리밸런스 계좌가 이미 존재한다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 3011, api_response)
+
+
 class InsufficientBalanceException(BaseOrderException):
     """
     주문하는 금액이 10USDC 미만인 경우에 발생한다.
