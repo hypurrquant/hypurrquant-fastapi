@@ -344,6 +344,42 @@ class CandleDataException(BaseException):
         super().__init__(message, 9001, api_response)
 
 
+class AllMidsException(BaseOrderException):
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 9002, api_response)
+
+
+class PerpMetaException(BaseOrderException):
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 9003, api_response)
+
+
+class PerpMarketDataException(BaseOrderException):
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 9004, api_response)
+
+
 class UnhandledErrorException(BaseOrderException):
     """
     buy, sell 주문에서 처리되지 않은 예외가 발생한 경우 발생한다.
