@@ -320,7 +320,7 @@ class InvalidFilterException(BaseOrderException):
         super().__init__(message, 7000, api_response)
 
 
-class MarketDataException(BaseException):
+class MarketDataException(BaseOrderException):
 
     def __init__(self, message: str, api_response=None):
         """
@@ -332,7 +332,7 @@ class MarketDataException(BaseException):
         super().__init__(message, 9000, api_response)
 
 
-class CandleDataException(BaseException):
+class CandleDataException(BaseOrderException):
 
     def __init__(self, message: str, api_response=None):
         """
