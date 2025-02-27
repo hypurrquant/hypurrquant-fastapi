@@ -8,7 +8,7 @@ def configure_logging(file_path):
     :param file_path: 호출 파일 경로
     """
     # 호출 파일 이름에서 파일명을 추출
-    file_name = os.path.splitext(os.path.basename(file_path))[0]
+    # file_name = os.path.splitext(os.path.basename(file_path))[0]
 
     # 로그 디렉토리 설정 및 생성 (필요시)
     log_dir = "logs"
@@ -24,7 +24,7 @@ def configure_logging(file_path):
     console_handler.setFormatter(console_formatter)
 
     # 로깅 설정
-    logger = logging.getLogger(file_name)  # 호출 파일 이름을 로거 이름으로 사용
+    logger = logging.getLogger(file_path)  # 호출 파일 이름을 로거 이름으로 사용
     logger.setLevel(logging.DEBUG)  # 전체 로깅 레벨 설정
     logger.addHandler(console_handler)
 
