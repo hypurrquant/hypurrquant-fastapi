@@ -9,6 +9,29 @@ from typing import Any, Dict, Optional
 logger = configure_logging(__file__)
 
 
+def log_request_error(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]],
+    params: Optional[Dict[str, str]],
+    data: Optional[Any],
+    json_data: Optional[Dict[str, Any]],
+    error: Exception,
+    response: Optional[aiohttp.ClientResponse] = None,
+) -> None:
+    log_msg = (
+        f"요청 실패 - Method: {method}, URL: {url}, Headers: {headers}, "
+        f"Params: {params}, Data: {data}, JSON: {json_data}\n"
+    )
+    if response:
+        log_msg += (
+            f"Response Status: {response.status}, "
+            f"Response Headers: {response.headers}, "
+            f"Response Content-Type: {response.content_type}"
+        )
+    logger.error(log_msg, exc_info=True)
+
+
 async def send_request(
     method: str,
     url: str,
@@ -46,29 +69,37 @@ async def send_request(
                         response_body["code"],
                         status_code=response.status,
                     )
-
                 else:
                     return BaseResponse(**response_body)
 
         except aiohttp.ClientConnectionError as e:
             logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e, response)
+            raise e
         except aiohttp.ClientResponseError as e:
             logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e, response)
+            raise e
         except aiohttp.ClientPayloadError as e:
             logger.error(
                 "페이로드 오류 발생: 응답 페이로드 처리 중 문제가 발생했습니다.",
                 exc_info=True,
             )
+            log_request_error(method, url, headers, params, data, json, e, response)
+            raise e
         except asyncio.TimeoutError as e:
             logger.error(
                 "타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True
             )
+            log_request_error(method, url, headers, params, data, json, e, response)
             raise e
         except aiohttp.ClientError as e:
             logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e, response)
             raise e
         except Exception as e:
             logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e, response)
             raise e
 
 
@@ -112,18 +143,30 @@ async def send_request_for_external(
 
         except aiohttp.ClientConnectionError as e:
             logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e)
+            raise e
         except aiohttp.ClientResponseError as e:
             logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e)
+            raise e
         except aiohttp.ClientPayloadError as e:
             logger.error(
                 "페이로드 오류 발생: 응답 페이로드 처리 중 문제가 발생했습니다.",
                 exc_info=True,
             )
+            log_request_error(method, url, headers, params, data, json, e)
+            raise e
         except asyncio.TimeoutError as e:
             logger.error(
                 "타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True
             )
+            log_request_error(method, url, headers, params, data, json, e)
+            raise e
         except aiohttp.ClientError as e:
             logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e)
+            raise e
         except Exception as e:
             logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e)
+            raise e
