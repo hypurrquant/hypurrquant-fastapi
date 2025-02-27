@@ -1,9 +1,10 @@
-import aiohttp
-from typing import Any, Dict, Optional, Optional
 from hypurrquant_fastapi_core.logging_config import configure_logging
 from hypurrquant_fastapi_core.response import BaseResponse
 from hypurrquant_fastapi_core.api.exception import get_exception_by_code
 from hypurrquant_fastapi_core.exception import BaseOrderException
+import aiohttp
+import asyncio
+from typing import Any, Dict, Optional
 
 logger = configure_logging(__file__)
 
@@ -35,7 +36,7 @@ async def send_request(
                     try:
                         code = response_body["code"]
                     except Exception as e:
-                        error_message = "서버의 응답을 처리하던 중 문제가 발생했습니다."
+                        error_message = "내부 서버에서 정의되지 않은 예외 코드가 발견되었습니다. 해당 예외를 살핀 후 수정해주세요"
                         logger.error(error_message)
                         logger.error(response_body)
                         raise Exception(error_message)
@@ -49,8 +50,26 @@ async def send_request(
                 else:
                     return BaseResponse(**response_body)
 
+        except aiohttp.ClientConnectionError as e:
+            logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
+        except aiohttp.ClientResponseError as e:
+            logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
+        except aiohttp.ClientPayloadError as e:
+            logger.error(
+                "페이로드 오류 발생: 응답 페이로드 처리 중 문제가 발생했습니다.",
+                exc_info=True,
+            )
+        except asyncio.TimeoutError as e:
+            logger.error(
+                "타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True
+            )
+            raise e
         except aiohttp.ClientError as e:
-            return {"error": f"Request failed: {str(e)}"}
+            logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+            raise e
+        except Exception as e:
+            logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
+            raise e
 
 
 async def send_request_for_external(
@@ -91,8 +110,20 @@ async def send_request_for_external(
                 response_body = await response.json()
                 return response_body
 
-        except aiohttp.ClientError as e:
+        except aiohttp.ClientConnectionError as e:
+            logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
+        except aiohttp.ClientResponseError as e:
+            logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
+        except aiohttp.ClientPayloadError as e:
             logger.error(
-                f"외부 서버에 요청을 보내던 중 aiohttp에서 문제가 발생했습니다: {e}"
+                "페이로드 오류 발생: 응답 페이로드 처리 중 문제가 발생했습니다.",
+                exc_info=True,
             )
-            raise e
+        except asyncio.TimeoutError as e:
+            logger.error(
+                "타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True
+            )
+        except aiohttp.ClientError as e:
+            logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+        except Exception as e:
+            logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
