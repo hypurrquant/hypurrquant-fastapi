@@ -31,7 +31,6 @@ hexbytes==0.3.1
 httpcore==1.0.7
 httpx==0.28.1
 hyperliquid-python-sdk==0.9.0
-hypurrquant_fastapi_core @ git+https://github.com/hypurrquant/hypurrquant-fastapi.git@8a8db39c5226a4db6234d5cb29c7f922818fd5dc#subdirectory=hypurrquant_fastapi_core
 idna==3.10
 iniconfig==2.0.0
 mongopersistence==0.3.2
