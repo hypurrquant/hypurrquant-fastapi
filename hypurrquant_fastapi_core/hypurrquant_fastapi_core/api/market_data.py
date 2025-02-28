@@ -15,7 +15,7 @@ load_dotenv()
 
 tracemalloc.start()
 
-logger = configure_logging("market-data")
+logger = configure_logging(__file__)
 DATA_SERVER_URL = os.getenv("BASE_URL")
 
 
