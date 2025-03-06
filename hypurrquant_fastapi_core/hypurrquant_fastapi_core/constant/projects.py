@@ -1,12 +1,13 @@
-# 프로젝트 및 서비스 목록
+from enum import Enum
+
 PROJECT_NAME = "hypurrquant"
 
-SERVICES = {
-    "account": "account",
-    "rebalance": "rebalance",
-    "fetch": "fetch",
-    "data": "data",
-    "order": "order",
-    "strategy": "strategy",
-    "telegram": "telegram",
-}
+
+class Service(Enum):
+    ACCOUNT = "account"
+    REBALANCE = "rebalance"
+    FETCH = "fetch"
+    DATA = "data"
+    ORDER = "order"
+    STRATEGY = "strategy"
+    TELEGRAM = "telegram"
