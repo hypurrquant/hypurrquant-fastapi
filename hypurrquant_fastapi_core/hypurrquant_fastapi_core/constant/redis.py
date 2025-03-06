@@ -7,6 +7,7 @@ ACCOUNT_REDIS_KEY = {
 
 DATA_REDIS_KEY = {
     "ALL_MIDS": f"{PROJECT_NAME}:{SERVICES['data']}:all_mids",
+    "ALL_MIDS_COUNT": f"{PROJECT_NAME}:all_mids_count",
     "PERP_CANDLE": f"{PROJECT_NAME}:{SERVICES['data']}:perp_candle",
     "PERP_MOMENTUM": f"{PROJECT_NAME}:{SERVICES['data']}:perp_momentum",
     "PERP_META": f"{PROJECT_NAME}:{SERVICES['data']}:perp_meta",
