@@ -19,3 +19,12 @@ class DataKafkaTopic(Enum):
     SPOT_MARKET_DATA_MID_PRICE = (
         f"{PROJECT_NAME}.{Service.DATA.value}.spotMarket.midPrice"
     )
+
+
+class RebalanceKafkaTopic(Enum):
+    REBLANACE_ACCOUNT_DELETE = (
+        f"{PROJECT_NAME}.{Service.REBALANCE.value}.account.delete"
+    )
+    REBALANCE_ACCOUNT_REFRESH = (
+        f"{PROJECT_NAME}.{Service.REBALANCE.value}.account.refresh"
+    )
