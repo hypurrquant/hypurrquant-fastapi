@@ -30,27 +30,6 @@ class AsyncMessagingProducer(ABC):
         """
 
 
-class AsyncMessagingConsumer(ABC):
-
-    @abstractmethod
-    async def start(self):
-        """클라이언트를 초기화합니다."""
-        pass
-
-    @abstractmethod
-    async def stop(self):
-        """클라이언트를 종료합니다."""
-        pass
-
-    @abstractmethod
-    async def consume_messages(self, destination: str):
-        """
-        destination: Kafka에서는 topic, SQS에서는 큐 URL 등 (구현체에 따라 사용)
-        async generator 형태로 메시지를 yield합니다.
-        """
-        pass
-
-
 class KafkaMessaingProducer(AsyncMessagingProducer):
     def __init__(
         self,
@@ -75,6 +54,48 @@ class KafkaMessaingProducer(AsyncMessagingProducer):
         # destination은 여기서는 topic과 동일하게 사용됩니다.
         await self.producer.send(destination, message)
         await self.producer.flush()
+
+
+class SQSMessagingProducer(AsyncMessagingProducer):
+    def __init__(self, region_name: str):
+        self.region_name = region_name
+        self.session = aioboto3.Session()
+        self.client = None
+
+    async def start(self):
+        self.client = await self.session.client(
+            "sqs", region_name=self.region_name
+        ).__aenter__()
+
+    async def stop(self):
+        if self.client:
+            await self.client.__aexit__(None, None, None)
+
+    async def send_message(self, destination: str, message: Any):
+        await self.client.send_message(
+            QueueUrl=destination, MessageBody=json.dumps(message)
+        )
+
+
+class AsyncMessagingConsumer(ABC):
+
+    @abstractmethod
+    async def start(self):
+        """클라이언트를 초기화합니다."""
+        pass
+
+    @abstractmethod
+    async def stop(self):
+        """클라이언트를 종료합니다."""
+        pass
+
+    @abstractmethod
+    async def consume_messages(self):
+        """
+        destination: Kafka에서는 topic, SQS에서는 큐 URL 등 (구현체에 따라 사용)
+        async generator 형태로 메시지를 yield합니다.
+        """
+        pass
 
 
 class KafkaMessaingConsumer(AsyncMessagingConsumer):
@@ -103,34 +124,13 @@ class KafkaMessaingConsumer(AsyncMessagingConsumer):
     async def stop(self):
         await self.consumer.stop()
 
-    async def consume_messages(self, destination: str):
+    async def consume_messages(self):
         # destination은 topic; 여기서 Kafka Consumer가 계속 yield하도록 함.
         try:
             async for msg in self.consumer:
                 yield msg.value
         except Exception as e:
             print("Kafka Consumer 에러:", e)
-
-
-class SQSMessagingProducer(AsyncMessagingProducer):
-    def __init__(self, region_name: str):
-        self.region_name = region_name
-        self.session = aioboto3.Session()
-        self.client = None
-
-    async def start(self):
-        self.client = await self.session.client(
-            "sqs", region_name=self.region_name
-        ).__aenter__()
-
-    async def stop(self):
-        if self.client:
-            await self.client.__aexit__(None, None, None)
-
-    async def send_message(self, destination: str, message: Any):
-        await self.client.send_message(
-            QueueUrl=destination, MessageBody=json.dumps(message)
-        )
 
 
 class SQSMessagingConsumer(AsyncMessagingConsumer):
@@ -149,7 +149,7 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         if self.client:
             await self.client.__aexit__(None, None, None)
 
-    async def consume_messages(self, destination: str):
+    async def consume_messages(self):
         # SQS는 폴링 방식을 사용합니다.
         while True:
             response = await self.client.receive_message(
