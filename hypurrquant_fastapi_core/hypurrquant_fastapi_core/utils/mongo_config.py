@@ -2,7 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from hypurrquant_fastapi_core.logging_config import configure_logging
 
-logger = configure_logging(__file__)
+logger = configure_logging(__name__)
 
 # ================================
 # 설정 정보 가져오기

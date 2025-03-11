@@ -12,7 +12,7 @@ from pymongo.errors import PyMongoError
 import aiohttp
 
 
-logger = configure_logging(__file__)
+logger = configure_logging(__name__)
 
 
 # ================================

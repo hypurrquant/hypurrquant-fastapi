@@ -6,7 +6,7 @@ import aiohttp
 import asyncio
 from typing import Any, Dict, Optional
 
-logger = configure_logging(__file__)
+logger = configure_logging(__name__)
 
 
 def log_request_error(
