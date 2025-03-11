@@ -1,4 +1,5 @@
 from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.singleton import singleton
 
 import asyncio
 import json
@@ -30,6 +31,7 @@ class AsyncMessagingProducer(ABC):
         """
 
 
+@singleton
 class KafkaMessagingProducer(AsyncMessagingProducer):
     def __init__(
         self,
@@ -56,6 +58,7 @@ class KafkaMessagingProducer(AsyncMessagingProducer):
         await self.producer.flush()
 
 
+@singleton
 class SQSMessagingProducer(AsyncMessagingProducer):
     def __init__(self, region_name: str):
         self.region_name = region_name
