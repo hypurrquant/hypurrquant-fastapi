@@ -23,7 +23,7 @@ def get_producer() -> AsyncMessagingProducer:
                 "환경 변수 KAFKA_BOOTSTRAP_SERVER_HOST 또는 KAFKA_BOOTSTRAP_SERVER_PORT가 존재하지않습니다."
             )
 
-        return KafkaMessaingProducer(f"{host}:{port}")
+        return KafkaMessagingProducer(f"{host}:{port}")
 
 
 def get_consumer(destination: str) -> AsyncMessagingConsumer:
@@ -46,4 +46,4 @@ def get_consumer(destination: str) -> AsyncMessagingConsumer:
                 "환경 변수 KAFKA_BOOTSTRAP_SERVER_HOST 또는 KAFKA_BOOTSTRAP_SERVER_PORT가 존재하지않습니다."
             )
 
-        return KafkaMessaingConsumer(f"{host}:{port}", destination)
+        return KafkaMessagingConsumer(f"{host}:{port}", destination)
