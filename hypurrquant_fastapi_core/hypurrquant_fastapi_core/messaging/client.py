@@ -30,7 +30,7 @@ class AsyncMessagingProducer(ABC):
         """
 
 
-class KafkaMessaingProducer(AsyncMessagingProducer):
+class KafkaMessagingProducer(AsyncMessagingProducer):
     def __init__(
         self,
         bootstrap_servers: str,
@@ -98,7 +98,7 @@ class AsyncMessagingConsumer(ABC):
         pass
 
 
-class KafkaMessaingConsumer(AsyncMessagingConsumer):
+class KafkaMessagingConsumer(AsyncMessagingConsumer):
     def __init__(
         self,
         bootstrap_servers: str,
