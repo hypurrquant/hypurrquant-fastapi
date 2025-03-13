@@ -25,3 +25,7 @@ class RebalanceRedisKey(Enum):
     PNL_TOTAL_PER_PUBLIC_KEY = (
         f"{PROJECT_NAME}:{Service.REBALANCE.value}:total_pnl:{{public_key}}"
     )
+
+
+class AlarmRedisKey(Enum):
+    ALARM = f"{PROJECT_NAME}:{Service.ALARM.value}:total_pnl_alarm:{{public_key}}"
