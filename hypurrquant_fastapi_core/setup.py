@@ -5,7 +5,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="hypurrquant_fastapi_core",  # 패키지 이름
-    version="0.1.10",  # 버전
+    version="0.1.11",  # 버전
     author="NOH YUSEONG",
     author_email="shdbtjd8@gmail.com",
     packages=find_packages(),  # 현재 디렉토리에서 패키지 찾기

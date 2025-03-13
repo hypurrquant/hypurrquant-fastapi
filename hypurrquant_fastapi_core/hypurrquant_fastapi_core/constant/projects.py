@@ -11,3 +11,4 @@ class Service(Enum):
     ORDER = "order"
     STRATEGY = "strategy"
     TELEGRAM = "telegram"
+    ALARM = "alarm"
