@@ -22,4 +22,6 @@ class DataRedisKey(Enum):
 
 class RebalanceRedisKey(Enum):
     PNL_PER_TICKER = f"{PROJECT_NAME}:{Service.REBALANCE.value}:pnl:{{ticker}}"
-    PNL_TOTAL_PER_PUBLIC_KEY = f"{PROJECT_NAME}:{Service.REBALANCE.value}:total_pnl"
+    PNL_TOTAL_PER_PUBLIC_KEY = (
+        f"{PROJECT_NAME}:{Service.REBALANCE.value}:total_pnl:{{public_key}}"
+    )
