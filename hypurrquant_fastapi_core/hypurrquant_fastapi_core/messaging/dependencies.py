@@ -29,8 +29,7 @@ def get_producer() -> AsyncMessagingProducer:
 def get_consumer(destination: str) -> AsyncMessagingConsumer:
     if PROFILE == "prod":
         region_name = os.getenv("REGION_NAME")
-        queue_url = os.getenv("QUEUE_URL")
-        if not region_name or not queue_url:
+        if not region_name:
             raise ValueError("환경 변수 REGION_NAME이 존재하지 않습니다.")
 
         return SQSMessagingConsumer(
