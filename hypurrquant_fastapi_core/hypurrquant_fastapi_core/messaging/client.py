@@ -1,12 +1,15 @@
 from hypurrquant_fastapi_core.logging_config import configure_logging
 from hypurrquant_fastapi_core.singleton import singleton
+from types_aiobotocore_sqs.client import SQSClient
 
+import botocore.exceptions
 import asyncio
 import json
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from abc import ABC, abstractmethod
 import aioboto3
 from typing import Any
+
 
 logger = configure_logging(__name__)
 
@@ -59,6 +62,26 @@ class KafkaMessagingProducer(AsyncMessagingProducer):
 
 
 @singleton
+class AsyncMessagingProducer(ABC):
+    @abstractmethod
+    async def start(self):
+        """클라이언트를 초기화합니다."""
+        pass
+
+    @abstractmethod
+    async def stop(self):
+        """클라이언트를 종료합니다."""
+        pass
+
+    @abstractmethod
+    async def send_message(self, destination: str, message: Any):
+        """
+        destination: Kafka에서는 topic, SQS에서는 큐 URL 등 (구현체에 따라 사용)
+        message: 전송할 데이터 (dict)
+        """
+
+
+@singleton
 class SQSMessagingProducer(AsyncMessagingProducer):
     def __init__(self, region_name: str):
         self.region_name = region_name
@@ -66,18 +89,49 @@ class SQSMessagingProducer(AsyncMessagingProducer):
         self.client = None
 
     async def start(self):
-        self.client = await self.session.client(
-            "sqs", region_name=self.region_name
-        ).__aenter__()
+        if self.client is None:
+            logger.info("Starting SQS client")
+            self.client = await self.session.client(
+                "sqs", region_name=self.region_name
+            ).__aenter__()
 
     async def stop(self):
         if self.client:
+            logger.info("Stopping SQS client")
             await self.client.__aexit__(None, None, None)
+            self.client = None
+
+    async def _reconnect(self):
+        logger.warning("Reconnecting SQS client due to error...")
+        await self.stop()
+        # 약간의 대기 후 재시도 (네트워크 상황에 따라 조정 가능)
+        await asyncio.sleep(1)
+        await self.start()
 
     async def send_message(self, destination: str, message: Any):
-        await self.client.send_message(
-            QueueUrl=destination, MessageBody=json.dumps(message)
-        )
+        try:
+            await self.client.send_message(
+                QueueUrl=destination, MessageBody=json.dumps(message)
+            )
+        except botocore.exceptions.ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code")
+            logger.exception(f"ClientError in send_message")
+            # 연결 문제 또는 클라이언트 만료와 관련된 에러라면 재연결 시도
+            if error_code in (
+                "RequestTimeout",
+                "RequestTimeoutException",
+                "ExpiredToken",
+            ):
+                await self._reconnect()
+                # 재연결 후 재시도
+                await self.client.send_message(
+                    QueueUrl=destination, MessageBody=json.dumps(message)
+                )
+            else:
+                raise
+        except Exception as e:
+            logger.exception("Unexpected error in send_message")
+            raise
 
 
 class AsyncMessagingConsumer(ABC):
@@ -144,28 +198,63 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         self.client = None
 
     async def start(self):
+        logger.info("Starting SQS consumer client")
         self.client = await self.session.client(
             "sqs", region_name=self.region_name
         ).__aenter__()
 
     async def stop(self):
         if self.client:
+            logger.info("Stopping SQS consumer client")
             await self.client.__aexit__(None, None, None)
+            self.client = None
+
+    async def _reconnect(self):
+        logger.warning("Reconnecting SQS consumer client due to error...")
+        await self.stop()
+        await asyncio.sleep(1)
+        await self.start()
 
     async def consume_messages(self):
         # SQS는 폴링 방식을 사용합니다.
         while True:
-            response = await self.client.receive_message(
-                QueueUrl=self.queue_url,
-                MaxNumberOfMessages=10,
-                WaitTimeSeconds=20,  # long polling
-            )
-            messages = response.get("Messages", [])
-            for m in messages:
-                yield json.loads(m["Body"])
-                # 메시지 처리 후 삭제
-                await self.client.delete_message(
-                    QueueUrl=self.queue_url, ReceiptHandle=m["ReceiptHandle"]
+            try:
+                response = await self.client.receive_message(
+                    QueueUrl=self.queue_url,
+                    MaxNumberOfMessages=10,
+                    WaitTimeSeconds=20,  # long polling
                 )
+            except botocore.exceptions.ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code")
+                logger.error(f"ClientError in receive_message: {error_code} - {e}")
+                # 연결 관련 에러인 경우 재연결 시도
+                if error_code in (
+                    "RequestTimeout",
+                    "RequestTimeoutException",
+                    "ExpiredToken",
+                ):
+                    await self._reconnect()
+                    continue  # 재연결 후 폴링 재시도
+                else:
+                    raise
+            except Exception as e:
+                logger.exception("Unexpected error during receive_message")
+                await self._reconnect()
+                continue
+
+            messages = response.get("Messages", [])
+            if messages:
+                for m in messages:
+                    try:
+                        # 메시지 처리
+                        yield json.loads(m["Body"])
+                        # 메시지 처리 후 삭제
+                        await self.client.delete_message(
+                            QueueUrl=self.queue_url, ReceiptHandle=m["ReceiptHandle"]
+                        )
+                    except botocore.exceptions.ClientError as e:
+                        logger.error(f"Error deleting message: {e}")
+                    except Exception as e:
+                        logger.exception("Unexpected error processing message")
             # 짧은 대기 후 다시 폴링
             await asyncio.sleep(0.1)

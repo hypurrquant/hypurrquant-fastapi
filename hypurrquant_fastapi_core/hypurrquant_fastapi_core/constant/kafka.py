@@ -1,6 +1,14 @@
 from enum import Enum
 from hypurrquant_fastapi_core.constant.projects import PROJECT_NAME, Service
 import os
+import boto3
+import botocore.exceptions
+import sys
+
+from hypurrquant_fastapi_core.logging_config import configure_logging
+
+logger = configure_logging(__name__)
+
 
 PROFILE = os.getenv("PROFILE", "prod")
 
@@ -40,9 +48,24 @@ def get_topic(default_topic: str) -> str:
     """
 
     if PROFILE == "prod":
-        tmp = os.getenv(default_topic)
-        if not tmp:
-            raise ValueError(f"환경 변수 {default_topic}이 존재하지 않습니다_")
-        return tmp
+        return get_sqs_queue_url(default_topic)
     else:
         return default_topic
+
+
+def get_sqs_queue_url(topic: str):
+    session = boto3.Session()
+    client = session.client("sqs", region_name="us-west-2")
+
+    try:
+        response = client.get_queue_url(QueueName=topic)
+    except botocore.exceptions.ClientError as err:
+        if err.response["Error"]["Code"] == "AWS.SimpleQueueService.NonExistentQueue":
+            print(f"Queue {topic} does not exist")
+            sys.exit(1)
+        else:
+            raise
+
+    queue_url = response["QueueUrl"]
+    logger.info(f"topic: {topic} / Queue URL: {queue_url}")
+    return queue_url

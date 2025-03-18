@@ -1,5 +1,9 @@
+aioboto3==14.1.0
+aiobotocore==2.21.1
+aiofiles==24.1.0
 aiohappyeyeballs==2.4.4
 aiohttp==3.11.11
+aioitertools==0.12.0
 aiokafka==0.12.0
 aiosignal==1.3.2
 annotated-types==0.7.0
@@ -7,6 +11,9 @@ anyio==4.8.0
 async-timeout==5.0.1
 attrs==24.3.0
 bitarray==3.0.0
+boto3==1.37.1
+botocore==1.37.1
+botocore-stubs==1.37.14
 cachetools==5.5.0
 certifi==2024.12.14
 charset-normalizer==3.4.1
@@ -31,8 +38,11 @@ hexbytes==0.3.1
 httpcore==1.0.7
 httpx==0.28.1
 hyperliquid-python-sdk==0.9.0
+-e git+https://github.com/hypurrquant/hypurrquant-telegram.git@3e44a22eb4eb9f49a4e092b0bbcccf02742b0375#egg=hypurrquant_telegram
+hypurrquant_fastapi_core @ git+https://github.com/hypurrquant/hypurrquant-fastapi.git@a1fb9012fee4c605b46b73bc8d80fbbfb4113773#subdirectory=hypurrquant_fastapi_core
 idna==3.10
 iniconfig==2.0.0
+jmespath==1.0.1
 mongopersistence==0.3.2
 motor==3.6.0
 msgpack==1.1.0
@@ -59,16 +69,22 @@ redis==5.2.1
 regex==2024.11.6
 requests==2.32.3
 rlp==4.0.1
+s3transfer==0.11.3
 sentry-sdk==2.20.0
 six==1.17.0
 sniffio==1.3.1
 starlette==0.41.3
 tomli==2.2.1
 toolz==1.0.0
+types-aioboto3==14.1.0
+types-aiobotocore==2.21.1
+types-aiobotocore-sqs==2.21.1
+types-awscrt==0.24.2
+types-s3transfer==0.11.4
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.3.0
 uvicorn==0.34.0
 websocket-client==1.8.0
+wrapt==1.17.2
 yarl==1.18.3
-aioboto3==14.1.0
