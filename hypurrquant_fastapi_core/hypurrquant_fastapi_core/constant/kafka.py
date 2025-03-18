@@ -11,6 +11,7 @@ logger = configure_logging(__name__)
 
 
 PROFILE = os.getenv("PROFILE", "prod")
+REGION_NAME = os.getenv("REGION_NAME")
 
 
 class AccountKafkaTopic(Enum):
@@ -55,7 +56,7 @@ def get_topic(default_topic: str) -> str:
 
 def get_sqs_queue_url(topic: str):
     session = boto3.Session()
-    client = session.client("sqs", region_name="us-west-2")
+    client = session.client("sqs", region_name=REGION_NAME)
 
     try:
         response = client.get_queue_url(QueueName=topic)
