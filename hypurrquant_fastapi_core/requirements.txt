@@ -38,8 +38,6 @@ hexbytes==0.3.1
 httpcore==1.0.7
 httpx==0.28.1
 hyperliquid-python-sdk==0.9.0
--e git+https://github.com/hypurrquant/hypurrquant-telegram.git@3e44a22eb4eb9f49a4e092b0bbcccf02742b0375#egg=hypurrquant_telegram
-hypurrquant_fastapi_core @ git+https://github.com/hypurrquant/hypurrquant-fastapi.git@a1fb9012fee4c605b46b73bc8d80fbbfb4113773#subdirectory=hypurrquant_fastapi_core
 idna==3.10
 iniconfig==2.0.0
 jmespath==1.0.1
