@@ -62,26 +62,6 @@ class KafkaMessagingProducer(AsyncMessagingProducer):
 
 
 @singleton
-class AsyncMessagingProducer(ABC):
-    @abstractmethod
-    async def start(self):
-        """클라이언트를 초기화합니다."""
-        pass
-
-    @abstractmethod
-    async def stop(self):
-        """클라이언트를 종료합니다."""
-        pass
-
-    @abstractmethod
-    async def send_message(self, destination: str, message: Any):
-        """
-        destination: Kafka에서는 topic, SQS에서는 큐 URL 등 (구현체에 따라 사용)
-        message: 전송할 데이터 (dict)
-        """
-
-
-@singleton
 class SQSMessagingProducer(AsyncMessagingProducer):
     def __init__(self, region_name: str):
         self.region_name = region_name
