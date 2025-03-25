@@ -106,5 +106,8 @@ hyqFetch = HyqFetch()
 
 async def periodic_task(interval):
     while True:
-        await hyqFetch.build_data()
+        try:
+            await hyqFetch.build_data()
+        except Exception as e:
+            logger.exception(f"market data fetch failed")
         await asyncio.sleep(interval)
