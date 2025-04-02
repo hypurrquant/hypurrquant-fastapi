@@ -34,13 +34,14 @@ class SlackFormatter(logging.Formatter):
 
     def format(self, record):
         # 기본 날짜 및 시간, 로거 관련 정보를 포맷팅
-        basic_info = f"`Environment`: {self.formatTime(record, self.datefmt)} - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]\n\n"
+        basic_info = f"`Environment`: {self.formatTime(record, self.datefmt)} - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]"
         # 1. 서버 이름
-        server_info = f"`Server Name`: {self.server_name}\n\n"
+        base_info = "# 💣 ERROR ALERT"
+        server_info = f"`Server Name`: {self.server_name}"
         # 2. 에러 무게 (레벨 이름과 번호)
-        error_weight = f"`Error Type`: {record.levelname} ({record.levelno})\n\n"
+        error_weight = f"`Error Type`: {record.levelname}"
         # 4. 메시지
-        message = f"`Message`: {record.getMessage()}\n\n"
+        message = f"`Message`: {record.getMessage()}"
         # 5. 예외 정보 (있다면 삼중 backticks로 감싸기)
         exception_info = ""
         if record.exc_info:
@@ -49,7 +50,7 @@ class SlackFormatter(logging.Formatter):
 
         # 각 항목을 "|" 기호로 한 줄에 모두 연결 (번호별 네이밍)
         formatted = (
-            " | ".join([server_info, error_weight, basic_info, message])
+            "\n\n".join([base_info, server_info, error_weight, basic_info, message])
             + exception_info
         )
         return formatted
@@ -80,7 +81,9 @@ class SlackHandler(logging.Handler):
                 loop.create_task(self.async_send(msg))
             else:
                 # 이벤트 루프가 없으면 동기 방식으로 전송
-                self.sync_client.chat_postMessage(channel=self.channel, text=msg)
+                self.sync_client.chat_postMessage(
+                    channel=self.channel, text=msg, blocks=self._create_blocks(msg)
+                )
         except SlackApiError as e:
             print(f"Slack API error: {e.response['error']}")
         except Exception as e:
@@ -88,11 +91,31 @@ class SlackHandler(logging.Handler):
 
     async def async_send(self, msg):
         try:
-            await self.async_client.chat_postMessage(channel=self.channel, text=msg)
+            await self.async_client.chat_postMessage(
+                channel=self.channel, text=msg, blocks=self._create_blocks(msg)
+            )
         except SlackApiError as e:
             print(f"Async Slack API error: {e.response['error']}")
         except Exception as e:
             print(f"Unexpected async error: {e}")
+
+    def _create_blocks(msg):
+        # Slack 블록 포맷팅을 위한 메서드 (필요시 구현)
+        return (
+            [
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": "💣 ERROR ALERT"},
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": msg,
+                    },
+                },
+            ],
+        )
 
 
 def configure_logging(file_path):
