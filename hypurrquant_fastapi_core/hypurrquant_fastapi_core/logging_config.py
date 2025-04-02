@@ -191,8 +191,9 @@ def configure_logging(file_path):
 def coroutine_logging(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        # 함수 실행 전에 고유한 UUID를 할당
-        coroutine_id.set(str(uuid.uuid4()))
+        # 이미 코루틴에서 UUID가 설정되어 있지 않은 경우에만 초기화
+        if coroutine_id.get() is None:
+            coroutine_id.set(str(uuid.uuid4()))
         return await func(*args, **kwargs)
 
     return wrapper
