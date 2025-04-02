@@ -29,10 +29,10 @@ class AccountKafkaTopic(Enum):
 
 class DataKafkaTopic(Enum):
     SPOT_MARKET_DATA_MID_PRICE = (
-        f"{PROJECT_NAME}_{Service.DATA.value}_spotMarket_midPrice"
+        f"{PROJECT_NAME}_{Service.DATA.value}_spotMarket_midPrice.fifo"
     )
     PERPETUAL_MARKET_DATA_MID_PRICE = (
-        f"{PROJECT_NAME}_{Service.DATA.value}_perpetualMarket_midPrice"
+        f"{PROJECT_NAME}_{Service.DATA.value}_perpetualMarket_midPrice.fifo"
     )
 
 

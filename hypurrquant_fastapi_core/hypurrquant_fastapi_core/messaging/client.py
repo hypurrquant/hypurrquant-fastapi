@@ -1,7 +1,7 @@
 from hypurrquant_fastapi_core.logging_config import configure_logging
 from hypurrquant_fastapi_core.singleton import singleton
 from types_aiobotocore_sqs.client import SQSClient
-
+from contextlib import asynccontextmanager
 import botocore.exceptions
 import asyncio
 import json
@@ -88,11 +88,21 @@ class SQSMessagingProducer(AsyncMessagingProducer):
         await asyncio.sleep(1)
         await self.start()
 
-    async def send_message(self, destination: str, message: Any):
+    async def send_message(
+        self, destination: str, message: Any, message_group_id: str = "default-groupd"
+    ):
         try:
-            await self.client.send_message(
-                QueueUrl=destination, MessageBody=json.dumps(message)
-            )
+            if "fifo" in destination:
+                # FIFO 큐인 경우 MessageGroupId와 MessageDeduplicationId 필요
+                await self.client.send_message(
+                    QueueUrl=destination,
+                    MessageBody=json.dumps(message),
+                    MessageGroupId=message_group_id,
+                )
+            else:
+                await self.client.send_message(
+                    QueueUrl=destination, MessageBody=json.dumps(message)
+                )
         except botocore.exceptions.ClientError as e:
             error_code = e.response.get("Error", {}).get("Code")
             logger.exception(f"ClientError in send_message")
@@ -134,6 +144,29 @@ class AsyncMessagingConsumer(ABC):
         """
         pass
 
+    @abstractmethod
+    async def pause(self):
+        """
+        소비를 일시정지합니다.
+        """
+        pass
+
+    @abstractmethod
+    async def resume(self):
+        """
+        소비를 재개합니다.
+        """
+        pass
+
+    async def cancel(self):
+        """
+        현재 처리 중인 메시지도 포함하여 이후 소비도 모두 취소합니다.
+        이 메서드가 호출되면, 진행 중인 메시지의 처리가 끝난 후에도
+        커밋(혹은 삭제)이 실행되지 않으므로, 해당 메시지들은 소비되지 않은 것으로 남습니다.
+        """
+        self._consume = False
+        logger.info("Consumption canceled: 현재 및 이후 메시지 소비가 취소되었습니다.")
+
 
 class KafkaMessagingConsumer(AsyncMessagingConsumer):
     def __init__(
@@ -147,13 +180,48 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
         self.loop = loop or asyncio.get_event_loop()
         self.bootstrap_servers = bootstrap_servers
         self.group_id = group_id
+        # 자동 커밋 비활성화 후, 메시지 처리 성공 시 수동 커밋 수행
         self.consumer = AIOKafkaConsumer(
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
             group_id=self.group_id,
+            enable_auto_commit=False,
             auto_offset_reset="earliest",
             value_deserializer=lambda v: json.loads(v.decode("utf-8")),
         )
+        self._paused = asyncio.Event()  # 일시정지/재개 이벤트
+        self._paused.set()  # 기본값은 재개 상태
+        self._consume = True  # 소비 여부 플래그
+
+    async def pause(self):
+        """
+        메시지 처리와 함께 fetch 단계도 일시정지하도록 Kafka consumer의 pause()를 호출합니다.
+        """
+        # 이미 일시정지 상태라면 아무것도 수행하지 않음
+        if not self._paused.is_set():
+            logger.info("Kafka Consumer is already paused. Skipping pause call.")
+            return
+
+        self._paused.clear()
+        partitions = self.consumer.assignment()
+        if partitions:
+            await self.consumer.pause(*partitions)
+        logger.info("Kafka Consumer paused (fetch and processing paused).")
+
+    async def resume(self):
+        """
+        메시지 처리와 fetch 단계 모두를 재개하도록 Kafka consumer의 resume()를 호출합니다.
+        """
+        # 이미 재개 상태라면 아무것도 수행하지 않음
+        if self._paused.is_set():
+            logger.info("Kafka Consumer is already resumed. Skipping resume call.")
+            return
+
+        self._paused.set()
+        partitions = self.consumer.assignment()
+        if partitions:
+            await self.consumer.resume(*partitions)
+        logger.info("Kafka Consumer resumed (fetch and processing resumed).")
 
     async def start(self):
         await self.consumer.start()
@@ -161,13 +229,52 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
     async def stop(self):
         await self.consumer.stop()
 
+    @asynccontextmanager
+    async def process_message(self, msg):
+        """
+        Kafka 메시지 처리 컨텍스트 매니저.
+        블록 내에서 예외 없이 정상 처리된 경우,
+        _consume 플래그가 활성화되어 있을 때만 오프셋을 커밋합니다.
+        """
+        try:
+            yield msg.value  # 사용자에게 처리할 메시지 값을 전달
+        except Exception:
+            logger.exception("Error processing Kafka message")
+            raise
+        else:
+            if self._consume:
+                try:
+                    await self.consumer.commit()
+                    logger.debug("Kafka message committed successfully")
+                except Exception as commit_error:
+                    logger.exception("Error committing Kafka message: %s", commit_error)
+            else:
+                logger.info("Consumption canceled: Kafka message not committed.")
+                self._consume = True  # 재설정하여 이후 메시지 소비 가능
+
     async def consume_messages(self):
-        # destination은 topic; 여기서 Kafka Consumer가 계속 yield하도록 함.
+        """
+        Kafka 메시지 소비 루프.
+        _consume 플래그가 꺼지면 이후 메시지뿐만 아니라,
+        현재 진행 중인 메시지도 정상 처리 후 커밋하지 않습니다.
+        """
         try:
             async for msg in self.consumer:
-                yield msg.value
+                await self._paused.wait()
+                if not self._consume:
+                    logger.info(
+                        "Consumption canceled: Breaking out of Kafka consumer loop."
+                    )
+                    break
+                try:
+                    async with self.process_message(msg) as processed_value:
+                        yield processed_value
+                except Exception:
+                    # 개별 메시지 처리 실패 시, 오프셋은 커밋되지 않으므로
+                    # 동일 메시지가 재처리될 수 있습니다.
+                    continue
         except Exception as e:
-            print("Kafka Consumer 에러:", e)
+            logger.exception("Kafka Consumer error: %s", e)
 
 
 class SQSMessagingConsumer(AsyncMessagingConsumer):
@@ -176,6 +283,27 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         self.region_name = region_name
         self.session = aioboto3.Session()
         self.client = None
+        self._paused = asyncio.Event()  # 일시정지/재개 이벤트
+        self._paused.set()  # 기본값은 재개 상태
+        self._consume = True  # 소비 여부 플래그
+
+    async def pause(self):
+        # 이미 일시정지 상태라면 아무것도 수행하지 않음
+        if not self._paused.is_set():
+            logger.info("SQS Consumer is already paused. Skipping pause call.")
+            return
+
+        self._paused.clear()
+        logger.info("SQS Consumer paused.")
+
+    async def resume(self):
+        # 이미 재개 상태라면 아무것도 수행하지 않음
+        if self._paused.is_set():
+            logger.info("SQS Consumer is already resumed. Skipping resume call.")
+            return
+
+        self._paused.set()
+        logger.info("SQS Consumer resumed.")
 
     async def start(self):
         logger.info("Starting SQS consumer client")
@@ -195,9 +323,44 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         await asyncio.sleep(1)
         await self.start()
 
+    @asynccontextmanager
+    async def process_message(self, message):
+        """
+        SQS 메시지 처리 컨텍스트 매니저.
+        블록 내에서 예외 없이 정상 처리된 경우,
+        _consume 플래그가 활성화되어 있을 때만 메시지를 삭제(커밋)합니다.
+        """
+        try:
+            yield message
+        except Exception:
+            logger.exception("Error during SQS message processing")
+            raise
+        else:
+            if self._consume:
+                try:
+                    await self.client.delete_message(
+                        QueueUrl=self.queue_url, ReceiptHandle=message["ReceiptHandle"]
+                    )
+                    logger.debug("SQS message deleted (committed) successfully")
+                except botocore.exceptions.ClientError as e:
+                    logger.error(f"Error deleting SQS message: {e}")
+                except Exception as e:
+                    logger.exception("Unexpected error deleting SQS message")
+            else:
+                logger.info("Consumption canceled: SQS message not deleted.")
+                self._consume = True
+
     async def consume_messages(self):
-        # SQS는 폴링 방식을 사용합니다.
+        """
+        SQS 메시지 소비 루프.
+        _consume 플래그가 꺼지면 이후 메시지뿐만 아니라,
+        현재 진행 중인 메시지도 정상 처리 후 삭제하지 않습니다.
+        """
         while True:
+            await self._paused.wait()
+            if not self._consume:
+                logger.info("Consumption canceled: Breaking out of SQS consumer loop.")
+                break
             try:
                 response = await self.client.receive_message(
                     QueueUrl=self.queue_url,
@@ -207,14 +370,13 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
             except botocore.exceptions.ClientError as e:
                 error_code = e.response.get("Error", {}).get("Code")
                 logger.error(f"ClientError in receive_message: {error_code} - {e}")
-                # 연결 관련 에러인 경우 재연결 시도
                 if error_code in (
                     "RequestTimeout",
                     "RequestTimeoutException",
                     "ExpiredToken",
                 ):
                     await self._reconnect()
-                    continue  # 재연결 후 폴링 재시도
+                    continue
                 else:
                     raise
             except Exception as e:
@@ -225,16 +387,16 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
             messages = response.get("Messages", [])
             if messages:
                 for m in messages:
-                    try:
-                        # 메시지 처리
-                        yield json.loads(m["Body"])
-                        # 메시지 처리 후 삭제
-                        await self.client.delete_message(
-                            QueueUrl=self.queue_url, ReceiptHandle=m["ReceiptHandle"]
+                    if not self._consume:
+                        logger.info(
+                            "Consumption canceled during processing: breaking out."
                         )
-                    except botocore.exceptions.ClientError as e:
-                        logger.error(f"Error deleting message: {e}")
-                    except Exception as e:
-                        logger.exception("Unexpected error processing message")
-            # 짧은 대기 후 다시 폴링
+                        break
+                    try:
+                        async with self.process_message(m) as msg:
+                            yield json.loads(msg["Body"])
+                    except Exception:
+                        # 개별 메시지 처리 에러는 로깅하고 다음 메시지로 넘어갑니다.
+                        continue
+
             await asyncio.sleep(0.1)
