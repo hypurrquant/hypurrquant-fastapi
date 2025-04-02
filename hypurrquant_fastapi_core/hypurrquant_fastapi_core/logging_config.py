@@ -101,21 +101,19 @@ class SlackHandler(logging.Handler):
 
     def _create_blocks(self, msg):
         # Slack 블록 포맷팅을 위한 메서드 (필요시 구현)
-        return (
-            [
-                {
-                    "type": "header",
-                    "text": {"type": "plain_text", "text": "💣 ERROR ALERT"},
+        return [
+            {
+                "type": "header",
+                "text": {"type": "plain_text", "text": "💣 ERROR ALERT"},
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": msg,
                 },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": msg,
-                    },
-                },
-            ],
-        )
+            },
+        ]
 
 
 def configure_logging(file_path):
