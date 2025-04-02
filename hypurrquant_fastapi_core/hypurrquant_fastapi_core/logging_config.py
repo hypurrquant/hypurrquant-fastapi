@@ -99,7 +99,7 @@ class SlackHandler(logging.Handler):
         except Exception as e:
             print(f"Unexpected async error: {e}")
 
-    def _create_blocks(msg):
+    def _create_blocks(self, msg):
         # Slack 블록 포맷팅을 위한 메서드 (필요시 구현)
         return (
             [
