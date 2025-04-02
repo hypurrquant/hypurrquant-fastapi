@@ -34,18 +34,18 @@ class SlackFormatter(logging.Formatter):
 
     def format(self, record):
         # 기본 날짜 및 시간, 로거 관련 정보를 포맷팅
-        basic_info = f"3. Environment: {self.formatTime(record, self.datefmt)} - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]\n"
+        basic_info = f"`Environment`: {self.formatTime(record, self.datefmt)} - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]\n\n"
         # 1. 서버 이름
-        server_info = f"1. Server name: {self.server_name}\n"
+        server_info = f"`Server Name`: {self.server_name}\n\n"
         # 2. 에러 무게 (레벨 이름과 번호)
-        error_weight = f"2. Error Type: {record.levelname} ({record.levelno})\n"
+        error_weight = f"`Error Type`: {record.levelname} ({record.levelno})\n\n"
         # 4. 메시지
-        message = f"4. Message: {record.getMessage()}\n"
+        message = f"`Message`: {record.getMessage()}\n\n"
         # 5. 예외 정보 (있다면 삼중 backticks로 감싸기)
         exception_info = ""
         if record.exc_info:
             exc_text = self.formatException(record.exc_info)
-            exception_info = f" | 5. Exception: ```{exc_text}```"
+            exception_info = f" `Exception`\n```{exc_text}```"
 
         # 각 항목을 "|" 기호로 한 줄에 모두 연결 (번호별 네이밍)
         formatted = (
