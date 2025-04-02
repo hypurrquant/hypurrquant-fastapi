@@ -34,25 +34,16 @@ class SlackFormatter(logging.Formatter):
         super().__init__(fmt=fmt, datefmt=datefmt, style=style)
 
     def format(self, record):
-        # 기본 날짜 및 시간, 로거 관련 정보를 포맷팅
-        # basic_info = f"`Environment`:  - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]"
-        # 1. 서버 이름
+        # 기본 정보 구성
         error_weight = f"`Error Type`: {record.levelname}"
         server_info = f"`Server Name`: {self.server_name}"
         time_info = f"`Time`: {self.formatTime(record, self.datefmt)}"
         file_info = f"`File`: {record.name}"
         func_info = f"`Function`: {record.funcName}"
         environment_info = f"`Environment`: [PID: {record.process}, TID: {record.thread}, LINE: {record.lineno} COROUTINE_ID: {record.coroutine_id}]"
-        # 2. 에러 무게 (레벨 이름과 번호)
-        # 4. 메시지
         message = f"`Message`: {record.getMessage()}"
-        # 5. 예외 정보 (있다면 삼중 backticks로 감싸기)
-        exception_info = ""
-        if record.exc_info:
-            exc_text = self.formatException(record.exc_info)
-            exception_info = f" `Exception`\n```{exc_text}```"
 
-        # 각 항목을 "|" 기호로 한 줄에 모두 연결 (번호별 네이밍)
+        # 기본 메시지에 예외 정보 없이 연결
         formatted = "\n\n".join(
             [
                 server_info,
@@ -62,10 +53,27 @@ class SlackFormatter(logging.Formatter):
                 func_info,
                 environment_info,
                 message,
-                exception_info,
             ]
         )
-        return formatted
+
+        # 예외 정보가 있는 경우
+        if record.exc_info:
+            exc_text = self.formatException(record.exc_info)
+            max_chunk = 2000
+            # exc_text를 2000자씩 분할
+            chunks = [
+                exc_text[i : i + max_chunk] for i in range(0, len(exc_text), max_chunk)
+            ]
+            exception_parts = []
+            for idx, chunk in enumerate(chunks):
+                if idx == 0:
+                    # 첫번째 조각에는 제목을 포함
+                    exception_parts.append(f"`Exception`\n```{chunk}```")
+                else:
+                    # 이후 조각은 제목 없이 추가
+                    exception_parts.append(f"```{chunk}```")
+            # 기본 메시지 뒤에 예외 부분 추가
+        return [formatted] + exception_parts
 
 
 # Slack 알림 전송용 커스텀 핸들러 (에러 수준 이상의 로그 전송)
@@ -94,7 +102,7 @@ class SlackHandler(logging.Handler):
             else:
                 # 이벤트 루프가 없으면 동기 방식으로 전송
                 self.sync_client.chat_postMessage(
-                    channel=self.channel, text=msg, blocks=self._create_blocks(msg)
+                    channel=self.channel, text="error", blocks=self._create_blocks(msg)
                 )
         except SlackApiError as e:
             print(f"Slack API error: {e.response['error']}")
@@ -104,28 +112,33 @@ class SlackHandler(logging.Handler):
     async def async_send(self, msg):
         try:
             await self.async_client.chat_postMessage(
-                channel=self.channel, text=msg, blocks=self._create_blocks(msg)
+                channel=self.channel, text="error", blocks=self._create_blocks(msg)
             )
         except SlackApiError as e:
             print(f"Async Slack API error: {e.response['error']}")
         except Exception as e:
             print(f"Unexpected async error: {e}")
 
-    def _create_blocks(self, msg):
+    def _create_blocks(self, msgs: list):
         # Slack 블록 포맷팅을 위한 메서드 (필요시 구현)
-        return [
+        block_list = [
             {
                 "type": "header",
                 "text": {"type": "plain_text", "text": "💣 ERROR ALERT"},
             },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": msg,
-                },
-            },
         ]
+
+        for msg in msgs:
+            block_list.append(
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": msg,
+                    },
+                }
+            )
+        return block_list
 
 
 def configure_logging(file_path):
@@ -183,14 +196,3 @@ def coroutine_logging(func):
         return await func(*args, **kwargs)
 
     return wrapper
-
-
-# 사용 예시
-if __name__ == "__main__":
-    logger = configure_logging(__file__)
-    logger.info("This is an info message.")
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("An error occurred!")
