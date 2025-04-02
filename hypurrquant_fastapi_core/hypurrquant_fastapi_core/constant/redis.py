@@ -43,5 +43,5 @@ class AlarmRedisKey(Enum):
 class CopytradingRedisKey(Enum):
     SUBSCRIBE_HEARTBEAT = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:heartbeat:{{target_public_key}}"
     SUBSCRIPTION_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:{{target_public_key}}:lock"
-    ORDER_HISTORY = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}"
-    ORDER_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}:lock"
+    ORDER_HISTORY = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}:{{oid}}"
+    ORDER_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}:{{oid}}:lock"
