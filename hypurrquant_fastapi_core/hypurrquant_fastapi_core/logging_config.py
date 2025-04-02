@@ -97,7 +97,6 @@ class SlackHandler(logging.Handler):
                 loop = None
 
             if loop and loop.is_running():
-                print("Async loop is running, sending message asynchronously.")
                 loop.create_task(self.async_send(msg))
             else:
                 # 이벤트 루프가 없으면 동기 방식으로 전송
@@ -192,7 +191,7 @@ def coroutine_logging(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         # 이미 코루틴에서 UUID가 설정되어 있지 않은 경우에만 초기화
-        if coroutine_id.get() is None:
+        if coroutine_id.get() is "N/A":
             coroutine_id.set(str(uuid.uuid4()))
         return await func(*args, **kwargs)
 
