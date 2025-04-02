@@ -31,6 +31,9 @@ class DataKafkaTopic(Enum):
     SPOT_MARKET_DATA_MID_PRICE = (
         f"{PROJECT_NAME}_{Service.DATA.value}_spotMarket_midPrice"
     )
+    PERPETUAL_MARKET_DATA_MID_PRICE = (
+        f"{PROJECT_NAME}_{Service.DATA.value}_perpetualMarket_midPrice"
+    )
 
 
 class RebalanceKafkaTopic(Enum):
@@ -40,6 +43,13 @@ class RebalanceKafkaTopic(Enum):
     REBALANCE_ACCOUNT_REFRESH = (
         f"{PROJECT_NAME}_{Service.REBALANCE.value}_account_refresh"
     )
+
+
+class CopyTradingKafkaTopic(Enum):
+    SUBSCRIPTION_TARGET_REGISTER = (
+        f"{PROJECT_NAME}_{Service.COPYTRADING.value}_subscription_target_register.fifo"
+    )
+    ACCOUNT_DELETE = f"{PROJECT_NAME}_{Service.COPYTRADING.value}_account_delete"
 
 
 def get_topic(default_topic: str) -> str:

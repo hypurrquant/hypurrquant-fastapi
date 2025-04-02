@@ -22,10 +22,26 @@ class DataRedisKey(Enum):
 
 class RebalanceRedisKey(Enum):
     PNL_PER_TICKER = f"{PROJECT_NAME}:{Service.REBALANCE.value}:pnl:{{ticker}}"
+    PNL_PER_TICKER_PERP = (
+        f"{PROJECT_NAME}:{Service.REBALANCE.value}:perp_pnl:{{ticker}}"
+    )
     PNL_TOTAL_PER_PUBLIC_KEY = (
         f"{PROJECT_NAME}:{Service.REBALANCE.value}:total_pnl:{{public_key}}"
+    )
+    PNL_TOTAL_PER_PUBLIC_KEY_PERP = (
+        f"{PROJECT_NAME}:{Service.REBALANCE.value}:perp_total_pnl:{{public_key}}"
     )
 
 
 class AlarmRedisKey(Enum):
     ALARM = f"{PROJECT_NAME}:{Service.ALARM.value}:total_pnl_alarm:{{public_key}}"
+    ALARM_PERP = (
+        f"{PROJECT_NAME}:{Service.ALARM.value}:perp_total_pnl_alarm:{{public_key}}"
+    )
+
+
+class CopytradingRedisKey(Enum):
+    SUBSCRIBE_HEARTBEAT = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:heartbeat:{{target_public_key}}"
+    SUBSCRIPTION_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:{{target_public_key}}:lock"
+    ORDER_HISTORY = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}"
+    ORDER_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}:lock"
