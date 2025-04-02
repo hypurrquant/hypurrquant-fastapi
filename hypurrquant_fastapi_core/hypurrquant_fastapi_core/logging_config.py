@@ -8,6 +8,7 @@ from slack_sdk import WebClient
 from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.errors import SlackApiError
 import traceback
+from pythonjsonlogger import jsonlogger
 
 # contextvars를 사용하여 코루틴별 ID 저장
 coroutine_id = contextvars.ContextVar("coroutine_id", default="N/A")
@@ -36,7 +37,6 @@ class SlackFormatter(logging.Formatter):
         # 기본 날짜 및 시간, 로거 관련 정보를 포맷팅
         # basic_info = f"`Environment`:  - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]"
         # 1. 서버 이름
-        base_info = "# 💣 ERROR ALERT"
         error_weight = f"`Error Type`: {record.levelname}"
         server_info = f"`Server Name`: {self.server_name}"
         time_info = f"`Time`: {self.formatTime(record, self.datefmt)}"
@@ -55,7 +55,6 @@ class SlackFormatter(logging.Formatter):
         # 각 항목을 "|" 기호로 한 줄에 모두 연결 (번호별 네이밍)
         formatted = "\n\n".join(
             [
-                base_info,
                 server_info,
                 error_weight,
                 time_info,
@@ -131,7 +130,7 @@ class SlackHandler(logging.Handler):
 
 def configure_logging(file_path):
     """
-    로깅 설정 함수. 파일 이름에 따라 파일 핸들러가 동적으로 추가됩니다.
+    로깅 설정 함수. 파일 이름에 따라 핸들러가 동적으로 추가됩니다.
     :param file_path: 호출 파일 경로
     """
     log_dir = "logs"
@@ -141,14 +140,17 @@ def configure_logging(file_path):
     # 콘솔 핸들러 설정 (DEBUG 레벨 이상 처리)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logger_level)
-    console_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s "
+
+    # JSON 포맷터 설정: 원하는 필드를 포함하도록 포맷 문자열 작성
+    log_format = (
+        "%(asctime)s %(name)s %(levelname)s %(message)s "
         "[PID: %(process)d, TID: %(thread)d, FUNC: %(funcName)s, LINE: %(lineno)d, COROUTINE_ID: %(coroutine_id)s]"
     )
-    console_handler.setFormatter(console_formatter)
+    json_formatter = jsonlogger.JsonFormatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    console_handler.setFormatter(json_formatter)
     console_handler.addFilter(CoroutineFilter())
 
-    # Slack 핸들러 설정 (ERROR 이상 로그에 대해 Slack 알림 전송)
+    # Slack 핸들러 설정 (이전 코드와 동일)
     server_name = os.getenv("SERVER_NAME", "UnknownServer")
     slack_token = os.getenv("SLACK_BOT_TOKEN")
     slack_channel = os.getenv("SLACK_CHANNEL")
@@ -157,14 +159,13 @@ def configure_logging(file_path):
         slack_handler = SlackHandler(
             token=slack_token, channel=slack_channel, level=logging.ERROR
         )
-        # 커스텀 SlackFormatter를 사용하여 원하는 정보를 포함하도록 포맷팅
         slack_formatter = SlackFormatter(
             server_name=server_name, datefmt="%Y-%m-%d %H:%M:%S"
         )
         slack_handler.setFormatter(slack_formatter)
         slack_handler.addFilter(CoroutineFilter())
 
-    # 로거 설정 (호출 파일명을 로거 이름으로 사용)
+    # 로거 생성 (호출 파일명을 로거 이름으로 사용)
     logger = logging.getLogger(file_path)
     logger.setLevel(logger_level)
     logger.addHandler(console_handler)
