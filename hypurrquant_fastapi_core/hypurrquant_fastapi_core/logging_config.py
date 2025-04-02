@@ -1,8 +1,13 @@
-import logging
 import os
+import logging
 import contextvars
 import uuid
 import functools
+import asyncio
+from slack_sdk import WebClient
+from slack_sdk.web.async_client import AsyncWebClient
+from slack_sdk.errors import SlackApiError
+import traceback
 
 # contextvars를 사용하여 코루틴별 ID 저장
 coroutine_id = contextvars.ContextVar("coroutine_id", default="N/A")
@@ -20,6 +25,76 @@ if isinstance(logger_level, int):
     logger_level = logging.getLevelName(logger_level)
 
 
+# 커스텀 Slack Formatter
+class SlackFormatter(logging.Formatter):
+    def __init__(self, server_name, fmt=None, datefmt=None, style="%"):
+        self.server_name = server_name
+        # 기본 포맷 문자열은 빈 값으로 처리 (우리가 format() 메서드에서 직접 구성)
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
+
+    def format(self, record):
+        # 기본 날짜 및 시간, 로거 관련 정보를 포맷팅
+        basic_info = f"3. {self.formatTime(record, self.datefmt)} - {record.name} [PID: {record.process}, TID: {record.thread}, FUNC: {record.funcName}, LINE: {record.lineno}, COROUTINE_ID: {record.coroutine_id}]"
+        # 1. 서버 이름
+        server_info = f"1. 서버 이름: {self.server_name}"
+        # 2. 에러 무게 (레벨 이름과 번호)
+        error_weight = f"2. 에러 무게: {record.levelname} ({record.levelno})"
+        # 4. 메시지
+        message = f"4. 메시지: {record.getMessage()}"
+        # 5. 예외 정보 (있다면 삼중 backticks로 감싸기)
+        exception_info = ""
+        if record.exc_info:
+            exc_text = self.formatException(record.exc_info)
+            exception_info = f" | 5. 예외: ```{exc_text}```"
+
+        # 각 항목을 "|" 기호로 한 줄에 모두 연결 (번호별 네이밍)
+        formatted = (
+            " | ".join([server_info, error_weight, basic_info, message])
+            + exception_info
+        )
+        return formatted
+
+
+# Slack 알림 전송용 커스텀 핸들러 (에러 수준 이상의 로그 전송)
+class SlackHandler(logging.Handler):
+    def __init__(self, token, channel, level=logging.ERROR):
+        super().__init__(level)
+        self.token = token
+        self.channel = channel
+        # 동기 클라이언트
+        self.sync_client = WebClient(token=token)
+        # 비동기 클라이언트
+        self.async_client = AsyncWebClient(token=token)
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            # 현재 이벤트 루프가 있는지 확인
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                print("Async loop is running, sending message asynchronously.")
+                loop.create_task(self.async_send(msg))
+            else:
+                # 이벤트 루프가 없으면 동기 방식으로 전송
+                self.sync_client.chat_postMessage(channel=self.channel, text=msg)
+        except SlackApiError as e:
+            print(f"Slack API error: {e.response['error']}")
+        except Exception as e:
+            print(f"Unexpected error sending Slack message: {e}")
+
+    async def async_send(self, msg):
+        try:
+            await self.async_client.chat_postMessage(channel=self.channel, text=msg)
+        except SlackApiError as e:
+            print(f"Async Slack API error: {e.response['error']}")
+        except Exception as e:
+            print(f"Unexpected async error: {e}")
+
+
 def configure_logging(file_path):
     """
     로깅 설정 함수. 파일 이름에 따라 파일 핸들러가 동적으로 추가됩니다.
@@ -34,15 +109,33 @@ def configure_logging(file_path):
     console_handler.setLevel(logger_level)
     console_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s "
-        "[PID: %(process)d, TID: %(thread)d, FUNC: %(funcName)s, LINE: %(lineno)d COROUTINE_ID: %(coroutine_id)s]"
+        "[PID: %(process)d, TID: %(thread)d, FUNC: %(funcName)s, LINE: %(lineno)d, COROUTINE_ID: %(coroutine_id)s]"
     )
     console_handler.setFormatter(console_formatter)
     console_handler.addFilter(CoroutineFilter())
+
+    # Slack 핸들러 설정 (ERROR 이상 로그에 대해 Slack 알림 전송)
+    server_name = os.getenv("SERVER_NAME", "UnknownServer")
+    slack_token = os.getenv("SLACK_BOT_TOKEN")
+    slack_channel = os.getenv("SLACK_CHANNEL")
+    slack_handler = None
+    if slack_token and slack_channel and server_name:
+        slack_handler = SlackHandler(
+            token=slack_token, channel=slack_channel, level=logging.ERROR
+        )
+        # 커스텀 SlackFormatter를 사용하여 원하는 정보를 포함하도록 포맷팅
+        slack_formatter = SlackFormatter(
+            server_name=server_name, datefmt="%Y-%m-%d %H:%M:%S"
+        )
+        slack_handler.setFormatter(slack_formatter)
+        slack_handler.addFilter(CoroutineFilter())
 
     # 로거 설정 (호출 파일명을 로거 이름으로 사용)
     logger = logging.getLogger(file_path)
     logger.setLevel(logger_level)
     logger.addHandler(console_handler)
+    if slack_handler:
+        logger.addHandler(slack_handler)
 
     return logger
 
@@ -55,3 +148,14 @@ def coroutine_logging(func):
         return await func(*args, **kwargs)
 
     return wrapper
+
+
+# 사용 예시
+if __name__ == "__main__":
+    logger = configure_logging(__file__)
+    logger.info("This is an info message.")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("An error occurred!")
