@@ -64,7 +64,6 @@ class SlackFormatter(logging.Formatter):
         )
 
         # 예외 정보가 있는 경우
-        exception_parts = []
         if record.exc_info:
             exc_text = self.formatException(record.exc_info)
             max_chunk = 2000
@@ -72,6 +71,7 @@ class SlackFormatter(logging.Formatter):
             chunks = [
                 exc_text[i : i + max_chunk] for i in range(0, len(exc_text), max_chunk)
             ]
+            exception_parts = []
             for idx, chunk in enumerate(chunks):
                 if idx == 0:
                     # 첫번째 조각에는 제목을 포함
@@ -208,7 +208,7 @@ def coroutine_logging(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         # 이미 코루틴에서 UUID가 설정되어 있지 않은 경우에만 초기화
-        if coroutine_id.get() == "N/A":
+        if coroutine_id.get() is "N/A":
             coroutine_id.set(str(uuid.uuid4()))
         return await func(*args, **kwargs)
 
