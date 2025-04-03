@@ -144,17 +144,6 @@ class SlackHandler(logging.Handler):
         return block_list
 
 
-loki_handler = logging_loki.LokiHandler(
-    Queue(-1),
-    url=LOKI_URL,
-    tags={"application": SERVER_NAME},
-    auth=("username", "password"),
-    version="1",
-)
-loki_handler.addFilter(CoroutineFilter())
-loki_handler.setFormatter
-
-
 def configure_logging(file_path):
     """
     로깅 설정 함수. 파일 이름에 따라 핸들러가 동적으로 추가됩니다.
