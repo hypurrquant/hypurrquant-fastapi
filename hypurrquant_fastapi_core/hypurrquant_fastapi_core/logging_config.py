@@ -162,7 +162,9 @@ def configure_logging(file_path):
         "%(asctime)s %(name)s %(levelname)s %(message)s "
         "[PID: %(process)d, TID: %(thread)d, FUNC: %(funcName)s, LINE: %(lineno)d, COROUTINE_ID: %(coroutine_id)s]"
     )
-    json_formatter = jsonlogger.JsonFormatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    json_formatter = jsonlogger.JsonFormatter(
+        log_format, datefmt="%Y-%m-%d %H:%M:%S", ensure_ascii=False
+    )
     console_handler.setFormatter(json_formatter)
     console_handler.addFilter(CoroutineFilter())
 
