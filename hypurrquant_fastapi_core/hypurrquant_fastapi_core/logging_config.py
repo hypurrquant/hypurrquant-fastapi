@@ -192,7 +192,7 @@ def configure_logging(file_path):
     # 로키 설정
     loki_handler = None
     if LOKI_URL:
-        loki_handler = logging_loki.LokiHandler(
+        loki_handler = logging_loki.LokiQueueHandler(
             Queue(-1),
             url=LOKI_URL,
             tags={"application": SERVER_NAME},
