@@ -7,11 +7,18 @@ import asyncio
 from slack_sdk import WebClient
 from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.errors import SlackApiError
-import traceback
 from pythonjsonlogger import jsonlogger
+import logging_loki
+from multiprocessing import Queue
 
 # contextvars를 사용하여 코루틴별 ID 저장
 coroutine_id = contextvars.ContextVar("coroutine_id", default="N/A")
+
+
+SERVER_NAME = os.getenv("SERVER_NAME", "UnknownServer")
+SLACK_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+SLACK_CHANNEL = os.getenv("SLACK_CHANNEL")
+LOKI_URL = os.getenv("LOKI_URL")
 
 
 # 커스텀 로깅 필터
@@ -99,10 +106,7 @@ class SlackHandler(logging.Handler):
             if loop and loop.is_running():
                 loop.create_task(self.async_send(msg))
             else:
-                # 이벤트 루프가 없으면 동기 방식으로 전송
-                self.sync_client.chat_postMessage(
-                    channel=self.channel, text="error", blocks=self._create_blocks(msg)
-                )
+                pass
         except SlackApiError as e:
             print(f"Slack API error: {e.response['error']}")
         except Exception as e:
@@ -140,6 +144,17 @@ class SlackHandler(logging.Handler):
         return block_list
 
 
+loki_handler = logging_loki.LokiHandler(
+    Queue(-1),
+    url=LOKI_URL,
+    tags={"application": SERVER_NAME},
+    auth=("username", "password"),
+    version="1",
+)
+loki_handler.addFilter(CoroutineFilter())
+loki_handler.setFormatter
+
+
 def configure_logging(file_path):
     """
     로깅 설정 함수. 파일 이름에 따라 핸들러가 동적으로 추가됩니다.
@@ -163,19 +178,28 @@ def configure_logging(file_path):
     console_handler.addFilter(CoroutineFilter())
 
     # Slack 핸들러 설정 (이전 코드와 동일)
-    server_name = os.getenv("SERVER_NAME", "UnknownServer")
-    slack_token = os.getenv("SLACK_BOT_TOKEN")
-    slack_channel = os.getenv("SLACK_CHANNEL")
     slack_handler = None
-    if slack_token and slack_channel and server_name:
+    if SLACK_TOKEN and SLACK_CHANNEL and SERVER_NAME:
         slack_handler = SlackHandler(
-            token=slack_token, channel=slack_channel, level=logging.ERROR
+            token=SLACK_TOKEN, channel=SLACK_CHANNEL, level=logging.WARNING
         )
         slack_formatter = SlackFormatter(
-            server_name=server_name, datefmt="%Y-%m-%d %H:%M:%S"
+            server_name=SERVER_NAME, datefmt="%Y-%m-%d %H:%M:%S"
         )
         slack_handler.setFormatter(slack_formatter)
         slack_handler.addFilter(CoroutineFilter())
+
+    # 로키 설정
+    loki_handler = None
+    if LOKI_URL:
+        loki_handler = logging_loki.LokiHandler(
+            Queue(-1),
+            url=LOKI_URL,
+            tags={"application": SERVER_NAME},
+            version="1",
+        )
+        loki_handler.addFilter(CoroutineFilter())
+        loki_handler.setFormatter(json_formatter)
 
     # 로거 생성 (호출 파일명을 로거 이름으로 사용)
     logger = logging.getLogger(file_path)
@@ -183,6 +207,8 @@ def configure_logging(file_path):
     logger.addHandler(console_handler)
     if slack_handler:
         logger.addHandler(slack_handler)
+    if loki_handler:
+        logger.addHandler(loki_handler)
 
     return logger
 
