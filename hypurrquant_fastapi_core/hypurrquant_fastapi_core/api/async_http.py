@@ -29,7 +29,7 @@ def log_request_error(
             f"Response Headers: {response.headers}, "
             f"Response Content-Type: {response.content_type}"
         )
-    logger.error(log_msg, exc_info=True)
+    logger.info(log_msg, exc_info=True)
 
 
 async def send_request(

@@ -19,7 +19,7 @@ logger = configure_logging(__name__)
 # 서버내 정의된 BaseOrderException 를 상속받은 예외를 처리
 # ================================
 async def base_order_exception_handler(request: Request, exc: BaseOrderException):
-    logger.warning(f"BaseOrderException: {exc}", exc_info=True)
+    logger.info(f"BaseOrderException: {exc}", exc_info=True)
     response = BaseResponse(
         code=exc.code, data=exc.api_response, error_message=exc.message
     )
@@ -41,6 +41,7 @@ async def aiohttp_ClientError_handler(request: Request, exc: aiohttp.ClientError
 async def api_limit_429_exception_handler(
     request: Request, exc: ApiLimitExceededException
 ):
+    logger.warning(f"BaseOrderException: {exc}", exc_info=True)
     response = BaseResponse(
         code=exc.code, data=exc.api_response, error_message=exc.message
     )
