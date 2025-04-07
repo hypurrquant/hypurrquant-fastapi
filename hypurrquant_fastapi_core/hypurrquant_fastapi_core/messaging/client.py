@@ -261,11 +261,6 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
         try:
             async for msg in self.consumer:
                 await self._paused.wait()
-                if not self._consume:
-                    logger.info(
-                        "Consumption canceled: Breaking out of Kafka consumer loop."
-                    )
-                    break
                 try:
                     async with self.process_message(msg) as processed_value:
                         yield processed_value
@@ -358,9 +353,6 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         """
         while True:
             await self._paused.wait()
-            if not self._consume:
-                logger.info("Consumption canceled: Breaking out of SQS consumer loop.")
-                break
             try:
                 response = await self.client.receive_message(
                     QueueUrl=self.queue_url,
