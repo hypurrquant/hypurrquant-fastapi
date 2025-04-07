@@ -220,7 +220,7 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
         self._paused.set()
         partitions = self.consumer.assignment()
         if partitions:
-            await self.consumer.resume(*partitions)
+            self.consumer.resume(*partitions)
         logger.info("Kafka Consumer resumed (fetch and processing resumed).")
 
     async def start(self):
