@@ -60,8 +60,6 @@ async def send_request(
                         code = response_body["code"]
                     except Exception as e:
                         error_message = "내부 서버에서 정의되지 않은 예외 코드가 발견되었습니다. 해당 예외를 살핀 후 수정해주세요"
-                        logger.error(error_message)
-                        logger.error(response_body)
                         raise Exception(error_message)
 
                     raise BaseOrderException(
@@ -94,9 +92,15 @@ async def send_request(
             log_request_error(method, url, headers, params, data, json, e, response)
             raise e
         except aiohttp.ClientError as e:
-            logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+            logger.error(f"기타 클라이언트 오류 발생:", exc_info=True)
             log_request_error(method, url, headers, params, data, json, e, response)
             raise e
+
+        except BaseOrderException as e:
+            logger.info(f"주문 관련 오류 발생", exc_info=True)
+            log_request_error(method, url, headers, params, data, json, e, response)
+            raise e
+
         except Exception as e:
             logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
             log_request_error(method, url, headers, params, data, json, e, response)
