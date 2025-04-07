@@ -10,6 +10,7 @@ from slack_sdk.errors import SlackApiError
 from pythonjsonlogger import jsonlogger
 import logging_loki
 from multiprocessing import Queue
+import sys
 
 # contextvars를 사용하여 코루틴별 ID 저장
 coroutine_id = contextvars.ContextVar("coroutine_id", default="N/A")
@@ -19,6 +20,7 @@ SERVER_NAME = os.getenv("SERVER_NAME", "UnknownServer")
 SLACK_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_CHANNEL = os.getenv("SLACK_CHANNEL")
 LOKI_URL = os.getenv("LOKI_URL")
+PROFILE = os.getenv("PROFILE", "prod")
 
 
 # 커스텀 로깅 필터
@@ -170,6 +172,7 @@ def configure_logging(file_path):
 
     # Slack 핸들러 설정 (이전 코드와 동일)
     slack_handler = None
+
     if SLACK_TOKEN and SLACK_CHANNEL and SERVER_NAME:
         slack_handler = SlackHandler(
             token=SLACK_TOKEN, channel=SLACK_CHANNEL, level=logging.WARNING
@@ -180,6 +183,8 @@ def configure_logging(file_path):
         slack_handler.setFormatter(slack_formatter)
         slack_handler.addFilter(CoroutineFilter())
 
+    if PROFILE == "prod" and not SLACK_TOKEN:
+        raise ValueError("SLACK_BOT_TOKEN and SLACK_CHANNEL must be set in production")
     # 로키 설정
     loki_handler = None
     if LOKI_URL:
