@@ -15,13 +15,13 @@ REGION_NAME = os.getenv("REGION_NAME")
 
 
 class AccountKafkaTopic(Enum):
-    DELETE_ACCOUNT = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_account_delete"
-    REBALANCE_ACCOUNT_CHANGE = (
-        f"{PROJECT_NAME}_{Service.ACCOUNT.value}_rebalance_account_change"
-    )
-    REBALANCE_ACCOUNT_REFRESH = (
-        f"{PROJECT_NAME}_{Service.ACCOUNT.value}_rebalance_account_refresh"
-    )
+    # DELETE_ACCOUNT = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_account_delete"
+    # REBALANCE_ACCOUNT_CHANGE = (
+    #     f"{PROJECT_NAME}_{Service.ACCOUNT.value}_rebalance_account_change"
+    # )
+    # REBALANCE_ACCOUNT_REFRESH = (
+    #     f"{PROJECT_NAME}_{Service.ACCOUNT.value}_rebalance_account_refresh"
+    # )
     SPOT_BALANCE_REFRESH = (
         f"{PROJECT_NAME}_{Service.ACCOUNT.value}_spot_balance_refresh"
     )
