@@ -209,16 +209,24 @@ def configure_logging(file_path):
     return logger
 
 
-def coroutine_logging(force_new: bool = False):
+def coroutine_logging(func=None, *, force_new=False):
+    """
+    데코레이터:
+      - 인자 없이 사용할 경우: 기존 값이 "N/A"일 때만 새 UUID를 생성
+      - force_new 인자를 True로 전달하면, 항상 새 UUID를 생성하여 설정
+    """
+
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            # force_new가 True면 무조건 새 UUID 설정,
-            # 아니면 기존 값이 "N/A"일 때만 새로 생성합니다.
             if force_new or coroutine_id.get() == "N/A":
                 coroutine_id.set(str(uuid.uuid4()))
             return await func(*args, **kwargs)
 
         return wrapper
 
+    # 데코레이터가 인자 없이 호출되었을 경우: @coroutine_logging
+    if func is not None:
+        return decorator(func)
+    # 인자를 포함하여 호출한 경우: @coroutine_logging(force_new=True)
     return decorator
