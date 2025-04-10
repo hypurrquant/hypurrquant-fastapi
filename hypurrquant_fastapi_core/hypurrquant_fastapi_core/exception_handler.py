@@ -10,7 +10,7 @@ from hypurrquant_fastapi_core.response import BaseResponse
 from hyperliquid.utils.error import ClientError, ServerError
 from pymongo.errors import PyMongoError
 import aiohttp
-
+import functools
 
 logger = configure_logging(__name__)
 
@@ -100,7 +100,7 @@ async def request_validaiton_exception_handler(
             data=None,  # 유효하지 않은 요청에는 데이터가 없음
             error_message="api 스펙에 맞지 않은 요청입니다.",
             message=str(exc.errors()),  # 에러 세부사항을 문자열로 변환
-        ).dict(),  # Pydantic 모델을 JSON으로 직렬화
+        ).model_dump(),  # Pydantic 모델을 JSON으로 직렬화
     )
 
 
@@ -116,5 +116,28 @@ async def global_exception_handler(request: Request, exc: Exception):
             data=None,
             error_message="정의되지 않은 예외가 발생했습니다. 당장 확인이 필요합니다.",
             message=str(exc),  # 예외 메시지를 출력
-        ).dict(),
+        ).model_dump(),
     )
+
+
+def handle_api_errors(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except ClientError as e:
+            # e 객체에 status_code 속성이 있거나, args에서 추출하는 방식으로 확인합니다.
+            status_code = getattr(e, "status_code", None)
+            if status_code is None and e.args:
+                status_code = e.args[0]  # 첫 번째 요소가 HTTP status라 가정
+            if status_code == 429:
+                logger.info(f"API limit exceeded")
+                raise ApiLimitExceededException("API limit exceeded")
+            else:
+                logger.exception(f"hyperliquid ClientError")
+                raise e
+        except ServerError as e:
+            logger.exception(f"Server error")
+            raise e
+
+    return wrapper
