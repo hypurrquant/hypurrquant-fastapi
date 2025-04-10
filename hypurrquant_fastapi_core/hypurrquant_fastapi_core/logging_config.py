@@ -209,12 +209,16 @@ def configure_logging(file_path):
     return logger
 
 
-def coroutine_logging(func):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        # 이미 코루틴에서 UUID가 설정되어 있지 않은 경우에만 초기화
-        if coroutine_id.get() == "N/A":
-            coroutine_id.set(str(uuid.uuid4()))
-        return await func(*args, **kwargs)
+def coroutine_logging(force_new: bool = False):
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            # force_new가 True면 무조건 새 UUID 설정,
+            # 아니면 기존 값이 "N/A"일 때만 새로 생성합니다.
+            if force_new or coroutine_id.get() == "N/A":
+                coroutine_id.set(str(uuid.uuid4()))
+            return await func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator

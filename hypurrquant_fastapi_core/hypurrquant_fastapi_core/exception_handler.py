@@ -65,9 +65,7 @@ async def pyMongoError_handler(request: Request, exc: PyMongoError):
 # ================================
 # 다뤄지지 않은 Hyperliquid client error
 # ================================
-async def hypuerliquid_client_error_handler(
-    request: Request, exc: ClientError
-):  # TODO 나중에 ClientError, ServerError 반환 스펙 살펴보기
+async def hypuerliquid_client_error_handler(request: Request, exc: ClientError):
     logger.error(f"Unhandled Hyperliquid client error: {exc}", exc_info=True)
     return JSONResponse(
         status_code=exc.status_code,

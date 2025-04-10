@@ -11,11 +11,11 @@ lock = threading.Lock()  # 상태 변경 시 동시성을 보장하기 위한 Lo
 
 
 # 상태를 비정상으로 변경하는 함수 (이미 unhealthy인 경우 무시)
-async def set_unhealthy(duration: int):
+async def _set_unhealthy(duration: int):
     global is_healthy
     with lock:
         if not is_healthy:
-            logger.info("set_unhealthy 호출은 이미 unhealthy 상태이므로 무시합니다.")
+            logger.info("_set_unhealthy 호출은 이미 unhealthy 상태이므로 무시합니다.")
             return
         is_healthy = False
 
@@ -27,10 +27,10 @@ async def set_unhealthy(duration: int):
         is_healthy = True
 
 
-# set_unhealthy를 호출하는 쪽에서는 백그라운드 태스크로 생성
+# _set_unhealthy를 호출하는 쪽에서는 백그라운드 태스크로 생성
 def trigger_unhealthy(duration: int):
     # await 없이 create_task로 백그라운드에서 실행
-    asyncio.create_task(set_unhealthy(duration))
+    asyncio.create_task(_set_unhealthy(duration))
 
 
 @health_router.get("/health")

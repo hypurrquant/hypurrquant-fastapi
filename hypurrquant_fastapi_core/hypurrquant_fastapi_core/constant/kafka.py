@@ -52,6 +52,18 @@ class CopyTradingKafkaTopic(Enum):
     ACCOUNT_DELETE = f"{PROJECT_NAME}_{Service.COPYTRADING.value}_account_delete"
 
 
+class OrderKakfaTopic(Enum):
+    PERP_OPEN = f"{PROJECT_NAME}_{Service.ORDER.value}_perp_open.fifo"
+    PERP_CLOSE = f"{PROJECT_NAME}_{Service.ORDER.value}_perp_close.fifo"
+    PERP_ALL_CLOSE = f"{PROJECT_NAME}_{Service.ORDER.value}_perp_closeAll.fifo"
+
+
+class AlarmKafkaTopic(Enum):
+    SEND_MESSAGE_TO_TELEGRAM = (
+        f"{PROJECT_NAME}_{Service.ALARM.value}_sendMessageToTelegram.fifo"
+    )
+
+
 def get_topic(default_topic: str) -> str:
     """
     env_var_name에 해당하는 환경 변수 값이 존재하면 그 값을 사용하고,
