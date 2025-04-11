@@ -152,6 +152,22 @@ class BuilderFeeNotApprovedException(OrderServerException):
         super().__init__(message, 1007, api_response)
 
 
+class RecudeOnlyException(OrderServerException):
+    """
+    포지션을 닫을 때 자신이 보유한 포지션보다 더 많이 닫으려고 하기 떄문에 이에 있어서 예외가 발생함.
+    reduce=True이기에 발생함
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 1008, api_response)
+
+
 class ApiLimitExceededException(BaseOrderException):
     """
     API 요청 제한이 초과된 경우 발생한다.
