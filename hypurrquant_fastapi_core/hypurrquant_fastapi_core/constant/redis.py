@@ -19,6 +19,10 @@ class DataRedisKey(Enum):
     MOMENTUM = f"{PROJECT_NAME}:{Service.DATA.value}:momentum"
     MARKET_DATA = f"{PROJECT_NAME}:{Service.DATA.value}:market_data"
 
+    # 실제 데이터 그대로
+    RAW_SPOT_META = f"{PROJECT_NAME}:{Service.DATA.value}:raw_spot_meta"
+    RAW_PERP_META = f"{PROJECT_NAME}:{Service.DATA.value}:raw_perp_meta"
+
 
 class RebalanceRedisKey(Enum):
     PNL_PER_TICKER = f"{PROJECT_NAME}:{Service.REBALANCE.value}:pnl:{{ticker}}"
