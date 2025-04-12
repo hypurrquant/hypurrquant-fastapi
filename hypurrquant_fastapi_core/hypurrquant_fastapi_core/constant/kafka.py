@@ -15,8 +15,7 @@ REGION_NAME = os.getenv("REGION_NAME")
 
 
 class AccountKafkaTopic(Enum):
-    SPOT_BALANCE_REFRESH = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_spot_balance_refresh"  # order 서버에서 spot을 구매하면 발행하는 이벤트
-    PERP_BALANCE_REFRESH = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_perp_balance_refresh"  # order 서버에서 perp을 구매하면 발행하는 이벤트
+    BALANCE_REFRESH = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_spot_balance_refresh"  # order 서버에서 buy, sell, perp 구매하면 발행하는 이벤트
 
 
 class DataKafkaTopic(Enum):
