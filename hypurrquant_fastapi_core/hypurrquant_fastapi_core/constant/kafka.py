@@ -15,34 +15,18 @@ REGION_NAME = os.getenv("REGION_NAME")
 
 
 class AccountKafkaTopic(Enum):
-    # DELETE_ACCOUNT = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_account_delete"
-    # REBALANCE_ACCOUNT_CHANGE = (
-    #     f"{PROJECT_NAME}_{Service.ACCOUNT.value}_rebalance_account_change"
-    # )
-    # REBALANCE_ACCOUNT_REFRESH = (
-    #     f"{PROJECT_NAME}_{Service.ACCOUNT.value}_rebalance_account_refresh"
-    # )
-    SPOT_BALANCE_REFRESH = (
-        f"{PROJECT_NAME}_{Service.ACCOUNT.value}_spot_balance_refresh"
-    )
+    SPOT_BALANCE_REFRESH = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_spot_balance_refresh"  # order 서버에서 spot을 구매하면 발행하는 이벤트
+    PERP_BALANCE_REFRESH = f"{PROJECT_NAME}_{Service.ACCOUNT.value}_perp_balance_refresh"  # order 서버에서 perp을 구매하면 발행하는 이벤트
 
 
 class DataKafkaTopic(Enum):
-    SPOT_MARKET_DATA_MID_PRICE = (
-        f"{PROJECT_NAME}_{Service.DATA.value}_spotMarket_midPrice.fifo"
-    )
-    PERPETUAL_MARKET_DATA_MID_PRICE = (
-        f"{PROJECT_NAME}_{Service.DATA.value}_perpetualMarket_midPrice.fifo"
-    )
+    SPOT_MARKET_DATA_MID_PRICE = f"{PROJECT_NAME}_{Service.DATA.value}_spotMarket_midPrice.fifo"  # fetch 서버에서 발행하는 이벤트
+    PERPETUAL_MARKET_DATA_MID_PRICE = f"{PROJECT_NAME}_{Service.DATA.value}_perpetualMarket_midPrice.fifo"  # fetch 서버에서 발행하는 이벤트
 
 
 class RebalanceKafkaTopic(Enum):
-    REBLANACE_ACCOUNT_DELETE = (
-        f"{PROJECT_NAME}_{Service.REBALANCE.value}_account_delete"
-    )
-    REBALANCE_ACCOUNT_REFRESH = (
-        f"{PROJECT_NAME}_{Service.REBALANCE.value}_account_refresh"
-    )
+    REBLANACE_ACCOUNT_DELETE = f"{PROJECT_NAME}_{Service.REBALANCE.value}_account_delete"  # rebalance 서버에서 계좌 삭제 시 발행하는 이벤트, 지금은 redis에서 spot을 삭제하는데
+    REBALANCE_ACCOUNT_REFRESH = f"{PROJECT_NAME}_{Service.REBALANCE.value}_account_refresh"  # account 서버에서 spot refresh 시 발행하는 이벤트, perp refresh 시에도 발행되게 하자.
 
 
 class CopyTradingKafkaTopic(Enum):

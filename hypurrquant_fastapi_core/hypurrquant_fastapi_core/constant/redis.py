@@ -6,11 +6,13 @@ from enum import Enum
 class AccountRedisKey(Enum):
     REFRESH_LOCK = f"{PROJECT_NAME}:{Service.ACCOUNT.value}:refresh_lock:{{public_key}}"
     BALANCE = f"{PROJECT_NAME}:{Service.ACCOUNT.value}:balance:{{ticker}}"
+    PERP_BALANCE = f"{PROJECT_NAME}:{Service.ACCOUNT.value}:perp_balance:{{ticker}}"
 
 
 class DataRedisKey(Enum):
     ALL_MIDS = f"{PROJECT_NAME}:{Service.DATA.value}:all_mids"
     ALL_MIDS_COUNT = f"{PROJECT_NAME}:all_mids_count"
+    PERP_ALL_MIDS_COUNT = f"{PROJECT_NAME}:perp_all_mids_count"
     PERP_CANDLE = f"{PROJECT_NAME}:{Service.DATA.value}:perp_candle"
     PERP_MOMENTUM = f"{PROJECT_NAME}:{Service.DATA.value}:perp_momentum"
     PERP_META = f"{PROJECT_NAME}:{Service.DATA.value}:perp_meta"
