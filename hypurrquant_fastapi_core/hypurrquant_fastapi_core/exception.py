@@ -79,7 +79,7 @@ class TooHighSlippageException(OrderServerException):
 class TooLowSlippageException(OrderServerException):
     """
     슬리피지가 너무 낮은 경우 발생한다.
-    "error":"Order could not immediately match against any resting orders. asset=10107" # TODO 10107은 아마 @107인듯
+    "error":"Order could not immediately match against any resting orders. asset=10107"
     """
 
     def __init__(self, message: str, api_response=None, status_code=400):
@@ -446,6 +446,21 @@ class NotCopyTradingAccountException(CopytradingServerException):
             api_response (Optional[Any]): The APIResponse object.
         """
         super().__init__(response, 5004, api_response)
+
+
+class MaxCopyReachException(CopytradingServerException):
+    """
+    최대 Copy 수에 도달한 경우 발생한다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 5005, api_response)
 
 
 class StrategyServerException(BaseOrderException):  # 7000번대 에러

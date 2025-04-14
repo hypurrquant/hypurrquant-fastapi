@@ -2,7 +2,11 @@ from hypurrquant_fastapi_core.models.market_data import MarketData
 from hypurrquant_fastapi_core.singleton import singleton
 from hypurrquant_fastapi_core.api.async_http import send_request
 from hypurrquant_fastapi_core.logging_config import configure_logging
-from hypurrquant_fastapi_core.exception import NoSuchTickerException
+from hypurrquant_fastapi_core.exception import (
+    NoSuchTickerException,
+    MarketDataException,
+)
+
 
 from typing import List, Dict
 import tracemalloc
@@ -54,7 +58,7 @@ class HyqFetch:
         with self._lock:
             if not self._market_datas:
                 logger.error("Market data is empty")
-                raise Exception("Market data is empty")
+                raise MarketDataException("Market data is empty")
             return self._market_datas
 
     def get_coin_list(self):
@@ -66,7 +70,7 @@ class HyqFetch:
             return [MarketData(**data) for data in response.data]
         except:
             logger.error("Failed to fetch market data")
-            raise Exception("Failed to fetch market data")  # TODO 예외 적용해야함
+            raise MarketDataException("Failed to fetch market data")
 
     async def build_data(self):
         try:
@@ -97,7 +101,7 @@ class HyqFetch:
             data = self.Tname_by_coin.get(coin)
             if not data:
                 logger.error(f"{coin} is not in market data")
-                raise Exception(f"{coin} is not in market data")
+                raise MarketDataException(f"{coin} is not in market data")
             return data
 
 
