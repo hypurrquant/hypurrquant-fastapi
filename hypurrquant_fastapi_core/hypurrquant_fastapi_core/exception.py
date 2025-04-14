@@ -508,6 +508,21 @@ class MaxCopyReachException(CopytradingServerException):
         super().__init__(response, 5005, api_response)
 
 
+class InvalidEthAddressException(CopytradingServerException):
+    """
+    올바르지 못 한 eth address인 경우 발생한다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 5006, api_response)
+
+
 class StrategyServerException(BaseOrderException):  # 7000번대 에러
 
     pass
