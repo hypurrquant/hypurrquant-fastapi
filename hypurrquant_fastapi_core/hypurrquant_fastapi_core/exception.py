@@ -168,6 +168,21 @@ class RecudeOnlyException(OrderServerException):
         super().__init__(message, 1008, api_response)
 
 
+class TooManyCumulativeOrdersException(OrderServerException):
+    """
+    너무 많은 누적 주문이 발생한 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 1009, api_response)
+
+
 class ApiLimitExceededException(BaseOrderException):
     """
     API 요청 제한이 초과된 경우 발생한다.
