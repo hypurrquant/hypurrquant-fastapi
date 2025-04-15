@@ -183,6 +183,22 @@ class TooManyCumulativeOrdersException(OrderServerException):
         super().__init__(message, 1009, api_response)
 
 
+class TooManySizeException(OrderServerException):
+    """
+    너무 큰 금액을 요청했을 시에 예외가 발생한다.
+    "error":"Order size cannot be larger than half of total supply."
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 1010, api_response)
+
+
 class ApiLimitExceededException(BaseOrderException):
     """
     API 요청 제한이 초과된 경우 발생한다.
