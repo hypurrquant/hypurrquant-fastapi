@@ -27,7 +27,7 @@ class AsyncMessagingProducer(ABC):
         pass
 
     @abstractmethod
-    async def send_message(self, destination, message: Any):
+    async def send_message(self, destination, message: Any, *args, **kwargs):
         """
         destination: Kafka에서는 topic, SQS에서는 큐 URL 등 (구현체에 따라 사용)
         message: 전송할 데이터 (dict)
@@ -55,7 +55,7 @@ class KafkaMessagingProducer(AsyncMessagingProducer):
     async def stop(self):
         await self.producer.stop()
 
-    async def send_message(self, destination: str, message: Any):
+    async def send_message(self, destination: str, message: Any, *args, **kwargs):
         # destination은 여기서는 topic과 동일하게 사용됩니다.
         await self.producer.send(destination, message)
         await self.producer.flush()
@@ -89,7 +89,12 @@ class SQSMessagingProducer(AsyncMessagingProducer):
         await self.start()
 
     async def send_message(
-        self, destination: str, message: Any, message_group_id: str = "default-groupd"
+        self,
+        destination: str,
+        message: Any,
+        message_group_id: str = "default-groupd",
+        *args,
+        **kwargs,
     ):
         try:
             if "fifo" in destination:
