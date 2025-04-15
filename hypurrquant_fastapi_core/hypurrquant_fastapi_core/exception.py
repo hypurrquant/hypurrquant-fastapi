@@ -426,6 +426,21 @@ class NoRebalanceDetailsException(BaseOrderException):
         super().__init__(response, 3014, api_response)
 
 
+class AlreadyRegisteredAccountException(BaseOrderException):
+    """
+    이미 등록된 계좌에 대한 예외입니다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 3015, api_response)
+
+
 class InsufficientBalanceException(AccountServerException):
     """
     출금하는 금액이 10USDC 미만인 경우에 발생한다.
