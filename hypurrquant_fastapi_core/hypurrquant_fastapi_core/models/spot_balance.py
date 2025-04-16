@@ -29,7 +29,7 @@ class SpotBalance(BaseModel):
     )
     def validate_float_fields(cls, value, info: ValidationInfo):
         if value is None or (isinstance(value, float) and math.isnan(value)):
-            logger.error(
+            logger.info(
                 f"Invalid value for {info.field_name}: {value}. Setting to 0.0."
             )
             return 0.0
