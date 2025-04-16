@@ -142,7 +142,7 @@ class AsyncMessagingConsumer(ABC):
         pass
 
     @abstractmethod
-    async def consume_messages(self):
+    async def consume_messages(self, *args, **kwargs):
         """
         destination: Kafka에서는 topic, SQS에서는 큐 URL 등 (구현체에 따라 사용)
         async generator 형태로 메시지를 yield합니다.
@@ -257,7 +257,7 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
                 logger.info("Consumption canceled: Kafka message not committed.")
                 self._consume = True  # 재설정하여 이후 메시지 소비 가능
 
-    async def consume_messages(self):
+    async def consume_messages(self, *args, **kwargs):
         """
         Kafka 메시지 소비 루프.
         _consume 플래그가 꺼지면 이후 메시지뿐만 아니라,
@@ -350,7 +350,7 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
                 logger.info("Consumption canceled: SQS message not deleted.")
                 self._consume = True
 
-    async def consume_messages(self):
+    async def consume_messages(self, *args, **kwargs):
         """
         SQS 메시지 소비 루프.
         _consume 플래그가 꺼지면 이후 메시지뿐만 아니라,
@@ -359,9 +359,10 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         while True:
             await self._paused.wait()
             try:
+                max_number_of_messages = kwargs.get("max_number_of_messages", 10)
                 response = await self.client.receive_message(
                     QueueUrl=self.queue_url,
-                    MaxNumberOfMessages=10,
+                    MaxNumberOfMessages=max_number_of_messages,
                     WaitTimeSeconds=20,  # long polling
                 )
             except botocore.exceptions.ClientError as e:
