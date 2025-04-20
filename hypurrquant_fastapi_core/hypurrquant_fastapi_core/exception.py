@@ -396,7 +396,7 @@ class ShouldBeTradingAcocuntException(AccountServerException):
         super().__init__(response, 3012, api_response)
 
 
-class RebalanceAccountNotRegisteredException(BaseOrderException):
+class RebalanceAccountNotRegisteredException(AccountServerException):
     """
     리밸런스 계좌가 이미 존재한다.
     """
@@ -411,7 +411,7 @@ class RebalanceAccountNotRegisteredException(BaseOrderException):
         super().__init__(response, 3013, api_response)
 
 
-class NoRebalanceDetailsException(BaseOrderException):
+class NoRebalanceDetailsException(AccountServerException):
     """
     리밸런스 계좌에 대한 상세 정보가 없다.
     """
@@ -426,7 +426,7 @@ class NoRebalanceDetailsException(BaseOrderException):
         super().__init__(response, 3014, api_response)
 
 
-class AlreadyRegisteredAccountException(BaseOrderException):
+class AlreadyRegisteredAccountException(AccountServerException):
     """
     이미 등록된 계좌에 대한 예외입니다.
     """
@@ -439,6 +439,21 @@ class AlreadyRegisteredAccountException(BaseOrderException):
             api_response (Optional[Any]): The APIResponse object.
         """
         super().__init__(response, 3015, api_response)
+
+
+class CannotApproveBuilderFeeException(AccountServerException):
+    """
+    Builder fee를 승인할 수 없는 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 3016, api_response)
 
 
 class InsufficientBalanceException(AccountServerException):
