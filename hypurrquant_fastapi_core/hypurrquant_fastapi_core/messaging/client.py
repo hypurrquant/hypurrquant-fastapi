@@ -9,7 +9,7 @@ from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from abc import ABC, abstractmethod
 import aioboto3
 from typing import Any
-
+import uuid
 
 logger = configure_logging(__name__)
 
@@ -103,6 +103,7 @@ class SQSMessagingProducer(AsyncMessagingProducer):
                     QueueUrl=destination,
                     MessageBody=json.dumps(message),
                     MessageGroupId=message_group_id,
+                    MessageDeduplicationId=str(uuid.uuid4()),
                 )
             else:
                 await self.client.send_message(
