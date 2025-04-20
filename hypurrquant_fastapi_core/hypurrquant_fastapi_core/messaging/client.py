@@ -120,9 +120,18 @@ class SQSMessagingProducer(AsyncMessagingProducer):
             ):
                 await self._reconnect()
                 # 재연결 후 재시도
-                await self.client.send_message(
-                    QueueUrl=destination, MessageBody=json.dumps(message)
-                )
+                if "fifo" in destination:
+                    # FIFO 큐인 경우 MessageGroupId와 MessageDeduplicationId 필요
+                    await self.client.send_message(
+                        QueueUrl=destination,
+                        MessageBody=json.dumps(message),
+                        MessageGroupId=message_group_id,
+                        MessageDeduplicationId=str(uuid.uuid4()),
+                    )
+                else:
+                    await self.client.send_message(
+                        QueueUrl=destination, MessageBody=json.dumps(message)
+                    )
             else:
                 raise
         except Exception as e:
