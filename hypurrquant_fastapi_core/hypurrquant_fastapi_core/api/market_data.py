@@ -5,6 +5,7 @@ from hypurrquant_fastapi_core.logging_config import configure_logging
 from hypurrquant_fastapi_core.exception import (
     NoSuchTickerException,
     MarketDataException,
+    NonJsonResponseIgnoredException,
 )
 
 
@@ -68,6 +69,8 @@ class HyqFetch:
         try:
             response = await send_request("GET", f"{DATA_SERVER_URL}/data/market-data")
             return [MarketData(**data) for data in response.data]
+        except NonJsonResponseIgnoredException as e:
+            raise e
         except:
             logger.error("Failed to fetch market data")
             raise MarketDataException("Failed to fetch market data")
@@ -83,6 +86,9 @@ class HyqFetch:
                 self._coin_by_Tname = new_coin_by_Tname
                 self._Tname_by_coin = new_Tname_by_coin
                 self._coin_list = new_coin_list
+        except NonJsonResponseIgnoredException:
+            logger.info("Non JSON response ignored")
+            return
         except Exception as e:
             logger.error(f"Failed to build market data: {e}")
             raise
