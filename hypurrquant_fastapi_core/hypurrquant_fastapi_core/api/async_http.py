@@ -91,9 +91,9 @@ async def send_request(
                     await _increment_html_counter_and_maybe_raise()
                     # 5회 미만인 동안엔 그냥 로그만 찍고 끝냄
                     body = await response.text()
-                    logger.warning(
+                    logger.info(
                         f"Non-JSON response ignored (count<{_consecutive_html_count}>): "
-                        f"status={response.status}, content-type={content_type}, body={body[:200]}"
+                        f"status={response.status}, content-type={content_type}, body={body[:200]} count={_consecutive_html_count}"
                     )
                     raise NonJsonResponseIgnoredException("비정상적인 응답입니다.")
 
