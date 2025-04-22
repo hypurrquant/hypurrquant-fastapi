@@ -9,6 +9,12 @@ from hypurrquant_fastapi_core.exception import (
 import aiohttp
 import asyncio
 from typing import Any, Dict, Optional
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 logger = configure_logging(__name__)
 
@@ -62,6 +68,19 @@ def log_request_error(
     logger.info(log_msg, exc_info=True)
 
 
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),  # 최대 3회 시도
+    wait=wait_exponential(multiplier=0.5, min=0.5),  # 0.5s → 1s → 2s …
+    retry=retry_if_exception_type(  # 재시도 대상 예외
+        (
+            aiohttp.ClientConnectionError,
+            aiohttp.ClientResponseError,
+            asyncio.TimeoutError,
+            NonJsonResponseIgnoredException,
+        )
+    ),
+)
 async def send_request(
     method: str,
     url: str,
@@ -86,7 +105,9 @@ async def send_request(
 
                 # 1) Content-Type 검사
                 content_type = response.headers.get("Content-Type", "")
-                if "application/json" not in content_type:
+                if (
+                    "application/json" not in content_type
+                ):  # TODO 추후에 count 조건을 변경해야할 수도 있음. 예를 들어서 다른 500번대 에러
                     # JSON이 아니면 카운터 올리고 5회 연속 시 예외
                     await _increment_html_counter_and_maybe_raise()
                     # 5회 미만인 동안엔 그냥 로그만 찍고 끝냄
@@ -140,6 +161,18 @@ async def send_request(
             raise
 
 
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(5),  # 최대 5회 재시도
+    wait=wait_exponential(multiplier=0.5, min=0.5),  # 0.5s → 1s → 2s → …
+    retry=retry_if_exception_type(
+        (
+            aiohttp.ClientConnectionError,
+            aiohttp.ClientResponseError,
+            asyncio.TimeoutError,
+        )
+    ),
+)
 async def send_request_for_external(
     method: str,
     url: str,
