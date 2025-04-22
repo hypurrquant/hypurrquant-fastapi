@@ -72,7 +72,6 @@ class HyqFetch:
         except NonJsonResponseIgnoredException as e:
             raise e
         except:
-            logger.error("Failed to fetch market data")
             raise MarketDataException("Failed to fetch market data")
 
     async def build_data(self):
@@ -89,9 +88,6 @@ class HyqFetch:
         except NonJsonResponseIgnoredException:
             logger.info("Non JSON response ignored")
             return
-        except Exception as e:
-            logger.error(f"Failed to build market data: {e}")
-            raise
 
     def filter_by_Tname(self, Tname):
         with self._lock:
