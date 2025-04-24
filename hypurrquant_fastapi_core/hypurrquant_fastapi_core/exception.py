@@ -505,6 +505,21 @@ class CannotAddReferralException(AccountServerException):
         super().__init__(message, 3018, api_response)
 
 
+class NoSuchReferralCodeException(AccountServerException):
+    """
+    추천 코드가 존재하지 않는 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 3019, api_response)
+
+
 class InsufficientBalanceException(AccountServerException):
     """
     출금하는 금액이 10USDC 미만인 경우에 발생한다.
