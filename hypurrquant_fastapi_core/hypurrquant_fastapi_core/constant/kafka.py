@@ -40,6 +40,9 @@ class OrderKakfaTopic(Enum):
     PERP_CLOSE = f"{PROJECT_NAME}_{Service.ORDER.value}_perp_close.fifo"
     PERP_ALL_CLOSE = f"{PROJECT_NAME}_{Service.ORDER.value}_perp_closeAll.fifo"
 
+    SPOT_BUY = f"{PROJECT_NAME}_{Service.ORDER.value}_spot_buy.fifo"
+    SPOT_SELL = f"{PROJECT_NAME}_{Service.ORDER.value}_spot_sell.fifo"
+
 
 class AlarmKafkaTopic(Enum):
     SEND_MESSAGE_TO_TELEGRAM = (
