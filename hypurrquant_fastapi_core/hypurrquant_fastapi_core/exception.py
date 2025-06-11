@@ -218,6 +218,21 @@ class TooManySizeException(OrderServerException):
         super().__init__(response, 1010, api_response)
 
 
+class InsufficientSpotBalanceException(OrderServerException):
+    """
+    Spot 잔고가 부족할 경우 발생하는 예외
+    """
+
+    def __init__(self, message: str, api_response=None, status_code=400):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 1011, api_response, status_code)
+
+
 class ApiLimitExceededException(BaseOrderException):
     """
     API 요청 제한이 초과된 경우 발생한다.
@@ -338,21 +353,6 @@ class SendUsdcException(AccountServerException):
             api_response (Optional[Any]): The APIResponse object.
         """
         super().__init__(response, 3007, api_response)
-
-
-class InsufficientSpotBalanceException(AccountServerException):
-    """
-    Spot 잔고가 부족할 경우 발생하는 예외
-    """
-
-    def __init__(self, message: str, api_response=None, status_code=400):
-        """
-        Args:
-            message (str): Error message from APIResponse.
-            code (int): Error code.
-            api_response (Optional[Any]): The APIResponse object.
-        """
-        super().__init__(message, 3008, api_response, status_code)
 
 
 class InsufficientPerpBalanceException(AccountServerException):
