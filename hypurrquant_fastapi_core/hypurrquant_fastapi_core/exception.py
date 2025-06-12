@@ -24,7 +24,7 @@ class CommonException(BaseOrderException):
     pass
 
 
-class NonJsonResponseIgnoredException(BaseOrderException):
+class NonJsonResponseIgnoredException(CommonException):
     """
     JSON이 아닌 응답을 무시하는 경우 발생한다.
     """
@@ -231,6 +231,21 @@ class InsufficientSpotBalanceException(OrderServerException):
             api_response (Optional[Any]): The APIResponse object.
         """
         super().__init__(message, 1011, api_response, status_code)
+
+
+class InvalidNonceException(OrderServerException):
+    """
+    주문 요청의 nonce가 유효하지 않은 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 1012, api_response)
 
 
 class ApiLimitExceededException(BaseOrderException):
