@@ -3,6 +3,7 @@ from typing import Any, Optional
 from hypurrquant_fastapi_core.logging_config import configure_logging
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from bson import ObjectId
 
 logger = configure_logging(__name__)
 
@@ -22,5 +23,7 @@ class BaseResponse(BaseModel):
 # ================================
 def success_response(data: Any, message: str = None) -> JSONResponse:
     response = BaseResponse(code=200, data=data, message=message)
-    encoded_content = jsonable_encoder(response.model_dump())
+    encoded_content = jsonable_encoder(
+        response.model_dump(), custom_encoder={ObjectId: str}
+    )
     return JSONResponse(status_code=200, content=encoded_content)
