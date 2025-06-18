@@ -51,3 +51,10 @@ class CopytradingRedisKey(Enum):
     SUBSCRIPTION_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:{{target_public_key}}:lock"
     ORDER_HISTORY = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}:{{oid}}"
     ORDER_LOCK = f"{PROJECT_NAME}:{Service.COPYTRADING.value}:subscription:order:{{target_public_key}}:{{oid}}:lock"
+
+
+class TelegramRedisKey(Enum):
+    SOLANA_BRIDGE_ADDRESS = (
+        f"{PROJECT_NAME}:{Service.TELEGRAM.value}:solana_bridge_address:{{address}}"
+    )
+    SOLANA_BRIDGE_FEE = f"{PROJECT_NAME}:{Service.TELEGRAM.value}:solana_bridge_fee"
