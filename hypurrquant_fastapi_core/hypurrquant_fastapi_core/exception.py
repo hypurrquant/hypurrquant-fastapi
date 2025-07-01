@@ -248,6 +248,21 @@ class InvalidNonceException(OrderServerException):
         super().__init__(message, 1012, api_response)
 
 
+class NoSuchPositionException(OrderServerException):
+    """
+    요청한 포지션이 존재하지 않는 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 1013, api_response)
+
+
 class ApiLimitExceededException(BaseOrderException):
     """
     API 요청 제한이 초과된 경우 발생한다.
