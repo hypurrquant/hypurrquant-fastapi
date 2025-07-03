@@ -228,9 +228,18 @@ async def send_request_for_external(
             json=json,
             timeout=aiohttp.ClientTimeout(total=timeout),
         ) as response:
-            response_body = None
-            response_body = await response.json()
-            return response_body
+            response.raise_for_status()
+            content_length = response.headers.get("Content-Length")
+            if response.status == 204 or str(content_length) == "0":
+                return {}
+
+            # 3) Content-Type 확인 (application/json이 아니면 빈 dict)
+            content_type = response.headers.get("Content-Type", "")
+            if "application/json" not in content_type:
+                return {}
+
+            # 4) 그 외에만 JSON 파싱
+            return await response.json()
 
     except aiohttp.ClientConnectionError as e:
         logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
