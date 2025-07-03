@@ -7,6 +7,7 @@ from hypurrquant_fastapi_core.exception import (
     NonJsonResponseIgnoredException,
 )
 import aiohttp
+from aiohttp import ClientSession, TCPConnector
 import asyncio
 from typing import Any, Dict, Optional
 from tenacity import (
@@ -23,6 +24,28 @@ import asyncio
 # 전역 카운터 & 락
 _consecutive_html_count = 0
 _html_count_lock = asyncio.Lock()
+
+_session: aiohttp.ClientSession | None = None
+
+
+def get_session() -> aiohttp.ClientSession:
+    global _session
+    if _session is None or _session.closed:
+        connector = TCPConnector(
+            limit=200,  # 최대 동시 커넥션
+            limit_per_host=50,  # 호스트당 최대
+            keepalive_timeout=30.0,  # 30초 유휴 후 커넥션 닫기
+            enable_cleanup_closed=True,  # 닫힌 커넥션 자동 정리
+        )
+        _session = ClientSession(connector=connector)
+    return _session
+
+
+async def close_session():
+    global _session
+    if _session and not _session.closed:
+        await _session.close()
+        _session = None
 
 
 async def _increment_html_counter_and_maybe_raise():
@@ -90,75 +113,72 @@ async def send_request(
     json: Optional[Dict[str, Any]] = None,
     timeout: int = 10,
 ) -> BaseResponse:
+    session = get_session()
+    try:
+        async with session.request(
+            method=method,
+            url=url,
+            headers=headers,
+            params=params,
+            data=data,
+            json=json,
+            timeout=aiohttp.ClientTimeout(total=timeout),
+        ) as response:
 
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.request(
-                method=method,
-                url=url,
-                headers=headers,
-                params=params,
-                data=data,
-                json=json,
-                timeout=aiohttp.ClientTimeout(total=timeout),
-            ) as response:
+            # 1) Content-Type 검사
+            content_type = response.headers.get("Content-Type", "")
+            if (
+                "application/json" not in content_type
+            ):  # TODO 추후에 count 조건을 변경해야할 수도 있음. 예를 들어서 다른 500번대 에러
+                # JSON이 아니면 카운터 올리고 5회 연속 시 예외
+                await _increment_html_counter_and_maybe_raise()
+                # 5회 미만인 동안엔 그냥 로그만 찍고 끝냄
+                body = await response.text()
+                logger.info(
+                    f"Non-JSON response ignored (count<{_consecutive_html_count}>): "
+                    f"status={response.status}, content-type={content_type}, body={body[:200]} count={_consecutive_html_count}"
+                )
+                raise NonJsonResponseIgnoredException("비정상적인 응답입니다.")
 
-                # 1) Content-Type 검사
-                content_type = response.headers.get("Content-Type", "")
-                if (
-                    "application/json" not in content_type
-                ):  # TODO 추후에 count 조건을 변경해야할 수도 있음. 예를 들어서 다른 500번대 에러
-                    # JSON이 아니면 카운터 올리고 5회 연속 시 예외
-                    await _increment_html_counter_and_maybe_raise()
-                    # 5회 미만인 동안엔 그냥 로그만 찍고 끝냄
-                    body = await response.text()
-                    logger.info(
-                        f"Non-JSON response ignored (count<{_consecutive_html_count}>): "
-                        f"status={response.status}, content-type={content_type}, body={body[:200]} count={_consecutive_html_count}"
-                    )
-                    raise NonJsonResponseIgnoredException("비정상적인 응답입니다.")
+            # 2) JSON 응답이면 카운터 리셋
+            _reset_html_counter()
 
-                # 2) JSON 응답이면 카운터 리셋
-                _reset_html_counter()
-
-                # 3) HTTP 오류 상태코드(4xx/5xx) 처리
-                if response.status >= 400:
-                    response_body = await response.json()
-                    code = response_body.get("code")
-
-                    if code is None:
-                        raise UnhandledErrorException(
-                            "400에러이지만 정의되지 않은 에러입니다."
-                        )
-
-                    message = response_body.get("message", "알 수 없는 오류")
-                    raise BaseOrderException(message, code, status_code=response.status)
-
-                # 4) 정상 JSON 파싱
+            # 3) HTTP 오류 상태코드(4xx/5xx) 처리
+            if response.status >= 400:
                 response_body = await response.json()
-                return BaseResponse(**response_body)
+                code = response_body.get("code")
 
-        # 이하 기존 예외 핸들러 유지...
-        except aiohttp.ClientConnectionError as e:
-            logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
+                if code is None:
+                    raise UnhandledErrorException(
+                        "400에러이지만 정의되지 않은 에러입니다."
+                    )
 
-        except asyncio.TimeoutError as e:
-            logger.error(
-                "타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True
-            )
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
+                message = response_body.get("message", "알 수 없는 오류")
+                raise BaseOrderException(message, code, status_code=response.status)
 
-        except BaseOrderException:
-            # 주문 오류는 이미 메시지 담겨 있으므로 그대로
-            raise
+            # 4) 정상 JSON 파싱
+            response_body = await response.json()
+            return BaseResponse(**response_body)
 
-        except Exception as e:
-            logger.error(f"예상치 못한 오류 발생: {e}", exc_info=True)
-            log_request_error(method, url, headers, params, data, json, e)
-            raise
+    # 이하 기존 예외 핸들러 유지...
+    except aiohttp.ClientConnectionError as e:
+        logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+
+    except asyncio.TimeoutError as e:
+        logger.error("타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+
+    except BaseOrderException:
+        # 주문 오류는 이미 메시지 담겨 있으므로 그대로
+        raise
+
+    except Exception as e:
+        logger.error(f"예상치 못한 오류 발생: {e}", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise
 
 
 @retry(
@@ -197,47 +217,45 @@ async def send_request_for_external(
     Returns:
         Dict[str, Any]: JSON 응답 데이터.
     """
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.request(
-                method=method,
-                url=url,
-                headers=headers,
-                params=params,
-                data=data,
-                json=json,
-                timeout=aiohttp.ClientTimeout(total=timeout),
-            ) as response:
-                response_body = None
-                response_body = await response.json()
-                return response_body
+    session = get_session()
+    try:
+        async with session.request(
+            method=method,
+            url=url,
+            headers=headers,
+            params=params,
+            data=data,
+            json=json,
+            timeout=aiohttp.ClientTimeout(total=timeout),
+        ) as response:
+            response_body = None
+            response_body = await response.json()
+            return response_body
 
-        except aiohttp.ClientConnectionError as e:
-            logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
-        except aiohttp.ClientResponseError as e:
-            logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
-        except aiohttp.ClientPayloadError as e:
-            logger.error(
-                "페이로드 오류 발생: 응답 페이로드 처리 중 문제가 발생했습니다.",
-                exc_info=True,
-            )
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
-        except asyncio.TimeoutError as e:
-            logger.error(
-                "타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True
-            )
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
-        except aiohttp.ClientError as e:
-            logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
-        except Exception as e:
-            logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
-            log_request_error(method, url, headers, params, data, json, e)
-            raise e
+    except aiohttp.ClientConnectionError as e:
+        logger.error("연결 오류 발생: 서버와의 연결에 실패했습니다.", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+    except aiohttp.ClientResponseError as e:
+        logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+    except aiohttp.ClientPayloadError as e:
+        logger.error(
+            "페이로드 오류 발생: 응답 페이로드 처리 중 문제가 발생했습니다.",
+            exc_info=True,
+        )
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+    except asyncio.TimeoutError as e:
+        logger.error("타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+    except aiohttp.ClientError as e:
+        logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
+    except Exception as e:
+        logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
+        log_request_error(method, url, headers, params, data, json, e)
+        raise e
