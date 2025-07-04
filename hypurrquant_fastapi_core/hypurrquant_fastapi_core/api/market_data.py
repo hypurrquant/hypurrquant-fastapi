@@ -26,6 +26,35 @@ DATA_SERVER_URL = os.getenv("BASE_URL")
 
 @singleton
 class HyqFetch:
+
+    USDC_DATA = MarketData(
+        prevDayPx=-1,
+        dayNtlVlm=-1,
+        markPx=-1,
+        midPx=-1,
+        circulatingSupply=-1,
+        coin="@0",
+        totalSupply=-1,
+        dayBaseVlm=-1,
+        tokens=[0, 0],
+        name="@0",
+        index_x=0,
+        isCanonical_x=False,
+        token=-1,
+        Tname="USDC",
+        szDecimals=-1,
+        weiDecimals=8,
+        index_y=-1,
+        tokenId="0x",
+        isCanonical_y=False,
+        evmContract=None,
+        fullName="USDC",
+        MarketCap=-1,
+        change_24h=-1,
+        change_24h_pct=-1,
+        sector=None,
+    )
+
     def __init__(self):
         self._market_datas: List[MarketData] = []
         self._coin_list = []
@@ -77,6 +106,7 @@ class HyqFetch:
     async def build_data(self):
         try:
             new_market_datas = await self._fetcg_market_data()
+            new_market_datas.append(self.USDC_DATA)  # USDC 데이터 추가
             new_coin_by_Tname = {data.Tname: data for data in new_market_datas}
             new_Tname_by_coin = {data.coin: data for data in new_market_datas}
             new_coin_list = [spot_meta.coin for spot_meta in new_market_datas]
