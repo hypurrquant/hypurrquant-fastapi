@@ -151,9 +151,9 @@ def configure_logging(file_path):
     로깅 설정 함수. 파일 이름에 따라 핸들러가 동적으로 추가됩니다.
     :param file_path: 호출 파일 경로
     """
-    log_dir = "logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir, exist_ok=True)
+    # log_dir = "logs"
+    # if not os.path.exists(log_dir):
+    #     os.makedirs(log_dir, exist_ok=True)
 
     # 콘솔 핸들러 설정 (DEBUG 레벨 이상 처리)
     console_handler = logging.StreamHandler()
