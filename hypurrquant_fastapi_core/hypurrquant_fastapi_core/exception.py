@@ -550,6 +550,21 @@ class NoSuchReferralCodeException(AccountServerException):
         super().__init__(message, 3019, api_response)
 
 
+class UsdTransferSmmllerThanFeeException(AccountServerException):
+    """
+    USDC 전송 금액이 수수료보다 작은 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None, status_code=400):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 3020, api_response, status_code)
+
+
 class InsufficientBalanceException(AccountServerException):
     """
     출금하는 금액이 10USDC 미만인 경우에 발생한다.
