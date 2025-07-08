@@ -1,5 +1,8 @@
 import os
 from hypurrquant_fastapi_core.logging_config import configure_logging
+from typing import Type, Dict, Any, TypeVar
+
+T = TypeVar("T")
 
 logger = configure_logging(__name__)
 
@@ -30,3 +33,17 @@ def singleton(cls):
         return instances[cls]
 
     return get_instance
+
+
+class SingletonRegistry:
+    _instances: Dict[Type[Any], Any] = {}
+
+    @classmethod
+    def get_instance(cls, klass: Type[T], *args, **kwargs) -> T:
+        # 이미 생성된 인스턴스가 있으면 바로 반환
+        if klass in cls._instances:
+            return cls._instances[klass]
+        # 없으면 동적으로 klass(*args, **kwargs) 호출해 생성
+        inst = klass(*args, **kwargs)
+        cls._instances[klass] = inst
+        return inst
