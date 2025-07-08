@@ -1,6 +1,7 @@
 import os
 from hypurrquant_fastapi_core.logging_config import configure_logging
 from typing import Type, Dict, Any, TypeVar
+import threading
 
 T = TypeVar("T")
 
@@ -36,14 +37,35 @@ def singleton(cls):
 
 
 class SingletonRegistry:
+    """
+    Interface-to-implementation mapping with singleton instance management.
+    """
+
     _instances: Dict[Type[Any], Any] = {}
+    _impl_map: Dict[Type[Any], Type[Any]] = {}
+    _lock = threading.Lock()
 
     @classmethod
-    def get_instance(cls, klass: Type[T], *args, **kwargs) -> T:
-        # 이미 생성된 인스턴스가 있으면 바로 반환
-        if klass in cls._instances:
-            return cls._instances[klass]
-        # 없으면 동적으로 klass(*args, **kwargs) 호출해 생성
-        inst = klass(*args, **kwargs)
-        cls._instances[klass] = inst
-        return inst
+    def register_implementation(cls, interface: Type[T], impl: Type[T]) -> None:
+        """
+        Register a concrete implementation for an interface.
+        """
+        with cls._lock:
+            cls._impl_map[interface] = impl
+
+    @classmethod
+    def get_instance(cls, interface: Type[T], *args, **kwargs) -> T:
+        """
+        Retrieve or create the singleton for the given interface.
+        If an implementation was registered, uses that; otherwise assumes interface is concrete.
+        """
+        with cls._lock:
+            # Determine the concrete class
+            concrete = cls._impl_map.get(interface, interface)
+            # If already instantiated, return it
+            if concrete in cls._instances:
+                return cls._instances[concrete]
+            # Instantiate and store
+            instance = concrete(*args, **kwargs)
+            cls._instances[concrete] = instance
+            return instance
