@@ -44,6 +44,7 @@ class GracefulShutdownMixin(ABC):
             # 중단 신호가 발생하면 루프를 종료
             except asyncio.TimeoutError:
                 continue
+        logger.debug("Graceful shutdown initiated, exiting run loop.")
 
     @abstractmethod
     async def run_once(self) -> None:
