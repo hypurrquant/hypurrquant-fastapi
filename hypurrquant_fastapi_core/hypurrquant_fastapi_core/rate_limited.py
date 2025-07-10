@@ -56,7 +56,8 @@ def hl_rate_limited(
         @wraps(fn)
         async def wrapper(*args, **kwargs):
             try:
-                await fn(*args, **kwargs)
+                result = await fn(*args, **kwargs)
+                return result
             finally:
                 await limiter.record(weight)
 
