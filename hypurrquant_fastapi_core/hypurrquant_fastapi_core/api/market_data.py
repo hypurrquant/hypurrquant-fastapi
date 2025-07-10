@@ -24,6 +24,7 @@ logger = configure_logging(__name__)
 DATA_SERVER_URL = os.getenv("BASE_URL")
 
 
+# TODO GracefulShutdownMixin을 상속받아야함
 @singleton
 class HyqFetch:
 

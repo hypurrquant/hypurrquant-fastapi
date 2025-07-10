@@ -1,11 +1,11 @@
 from hypurrquant_fastapi_core.models.perp_market_data import (
     MarketData as PerpMarketData,
 )
+from hypurrquant_fastapi_core.constant.projects import HYPERLIQUID_API_URL
 from hypurrquant_fastapi_core.singleton import singleton
 from hypurrquant_fastapi_core.logging_config import configure_logging, coroutine_logging
 from hypurrquant_fastapi_core.api.async_http import send_request
 from hypurrquant_fastapi_core.graceful_shutdown import GracefulShutdownMixin
-from hypurrquant.api.utils import BASE_URL
 
 from typing import Dict
 import tracemalloc
@@ -25,7 +25,7 @@ class PerpMarketDataCache(GracefulShutdownMixin):
     async def _fetch_market_data(self):
         response = await send_request(
             "GET",
-            f"{BASE_URL}/data/perp-market-data",
+            f"{HYPERLIQUID_API_URL}/data/perp-market-data",
         )
 
         market_data = {}
