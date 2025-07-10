@@ -50,6 +50,12 @@ class AlarmKafkaTopic(Enum):
     )
 
 
+class CommonKafkaTopic(Enum):
+    DELEGATE = (
+        f"{PROJECT_NAME}_common_delegate.fifo"  # delegate 서버에서 발행하는 이벤트
+    )
+
+
 def get_topic(default_topic: str) -> str:
     """
     env_var_name에 해당하는 환경 변수 값이 존재하면 그 값을 사용하고,

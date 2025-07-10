@@ -211,7 +211,7 @@ class BaseProducer(GracefulShutdownMixin):
 
         return msg
 
-    async def monitor(
+    def monitor(
         self,
         interval_seconds: int = 10,  # TODO 나중에 시간 수정해야함
     ):
@@ -341,6 +341,8 @@ class BaseConsumer:
                     f"[{self.TOPIC}] 처리 중 정의되지 않은 에러 발생", exc_info=True
                 )
 
+    # TODO 추후에 모든 consumer를 일괄적으로 재개하는 로직을 구현할 수 있음
+    # TODO sleep time을 인자로 받아야함.
     async def resume(self, consumer):
         await asyncio.sleep(60)
         await consumer.resume()
