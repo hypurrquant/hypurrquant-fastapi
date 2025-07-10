@@ -147,7 +147,7 @@ class RedisEnsureSingleExecution(EnsureSingleExecutionInterface):
                 return
 
             # 3) 실제 작업
-            await task_callable(msg, consumer)
+            await task_callable(event_message.data, consumer)
 
             # 4) 완료 마킹
             await _mark_completed()
