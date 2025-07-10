@@ -20,6 +20,7 @@ class DataRedisKey(Enum):
     CANDLE = f"{PROJECT_NAME}:{Service.DATA.value}:candle"
     MOMENTUM = f"{PROJECT_NAME}:{Service.DATA.value}:momentum"
     MARKET_DATA = f"{PROJECT_NAME}:{Service.DATA.value}:market_data"
+    CANDLE_BY_TICKER_INTERVAL = f"{PROJECT_NAME}:{Service.DATA.value}:candle:{{ticker}}:{{interval}}"  # ticker는 perp는 PerpMarketData의 name, spot은 MarketData의 coin
 
     # 실제 데이터 그대로
     RAW_SPOT_META = f"{PROJECT_NAME}:{Service.DATA.value}:raw_spot_meta"
