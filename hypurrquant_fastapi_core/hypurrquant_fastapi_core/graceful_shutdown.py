@@ -24,7 +24,7 @@ class GracefulShutdownMixin(ABC):
         loop.add_signal_handler(signal.SIGINT, self._stop_event.set)
         loop.add_signal_handler(signal.SIGTERM, self._stop_event.set)
 
-    async def run(self, interval: float = 1.0) -> None:
+    async def run(self, interval: float) -> None:
         """
         1) 시그널 등록(init_signals)
         2) while 루프 제어(중단 체크, 인터벌 대기)
