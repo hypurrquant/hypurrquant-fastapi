@@ -94,7 +94,7 @@ class DelegateResolver(BaseConsumer):
             key = DataRedisKey.CANDLE_BY_TICKER_INTERVAL.value.format(
                 ticker=ticker, interval=interval
             )
-            await redis_client.set(key, ttl, json.dumps(response))
+            await redis_client.setex(key, ttl, json.dumps(response))
             logger.debug(
                 f"[{self.TOPIC}] candle data for {ticker} with interval {interval} saved to Redis."
             )
