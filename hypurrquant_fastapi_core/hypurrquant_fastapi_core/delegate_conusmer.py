@@ -82,6 +82,7 @@ class DelegateResolver(BaseConsumer):
             end_ms = int(payload.get("end_ms"))
             ticker = payload.get("ticker")
             interval = payload.get("interval")
+            ttl = int(payload.get("ttl", 600))
             response = await self.fetcher.fetch_candle_data(
                 ticker, interval, start_ms, end_ms
             )
@@ -93,7 +94,7 @@ class DelegateResolver(BaseConsumer):
             key = DataRedisKey.CANDLE_BY_TICKER_INTERVAL.value.format(
                 ticker=ticker, interval=interval
             )
-            await redis_client.set(key, json.dumps(response))
+            await redis_client.set(key, ttl, json.dumps(response))
             logger.debug(
                 f"[{self.TOPIC}] candle data for {ticker} with interval {interval} saved to Redis."
             )
