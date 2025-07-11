@@ -21,8 +21,8 @@ class BollingerBandService:
         df["Lower"] = df["MA"] - 2 * df["STD"]
         return df
 
-    async def get_latest_band(self, df: pd.DataFrame, window: int = 20) -> tuple:
-        df_bb = self.compute_bollinger(df, window)
+    async def get_latest_band(self, coin, interval, window: int = 20) -> tuple:
+        df_bb = await self.compute_bollinger(coin, interval, window)
         latest_row = df_bb.iloc[-1]
         return (
             latest_row["Upper"],

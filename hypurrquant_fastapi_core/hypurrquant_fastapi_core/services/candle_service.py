@@ -2,6 +2,7 @@ from hypurrquant_fastapi_core.singleton import singleton
 from hypurrquant_fastapi_core.constant.redis import DataRedisKey
 from hypurrquant_fastapi_core.utils.redis_config import redis_client
 from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.exception import *
 import pandas as pd
 import json
 
@@ -16,7 +17,12 @@ class CandleService:
                 ticker=ticker, interval=interval
             )
         )
-        data = json.loads(response) if response else None
+        if response is None:
+            raise CandleDataException(
+                message=f"{ticker}의 {interval} 캔들 데이터가 없습니다."
+            )
+
+        data = json.loads(response)
 
         df = pd.DataFrame(data)
         df.rename(
