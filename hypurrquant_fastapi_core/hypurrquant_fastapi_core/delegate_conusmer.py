@@ -72,6 +72,7 @@ class DelegateResolver(BaseConsumer):
             await consumer.cancel()
             await consumer.pause()
             asyncio.create_task(self.resume(consumer))
+            return
 
         name = data.get("name")
         logger.debug(f"[{self.TOPIC}] Processing message: {name}")
