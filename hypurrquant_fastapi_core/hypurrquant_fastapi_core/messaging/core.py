@@ -5,7 +5,7 @@ from hypurrquant_fastapi_core.graceful_shutdown import GracefulShutdownMixin
 from hypurrquant_fastapi_core.messaging.client import *
 from hypurrquant_fastapi_core.exception import *
 import time
-from typing import Optional, Any, Callable, List
+from typing import Optional, Any, Callable, List, Dict
 from uuid import uuid4
 from abc import ABC, abstractmethod
 import asyncio
@@ -93,6 +93,7 @@ class RedisEnsureSingleExecution(EnsureSingleExecutionInterface):
             mapping={
                 "status": "assigned",
                 "assigned_at": msg.timestamp,
+                "payload": json.dumps(msg.data),
             },
         )
         await redis_client.expire(msg.status_key, self.status_ttl)
@@ -173,6 +174,7 @@ class BaseProducer(GracefulShutdownMixin):
             EnsureSingleExecutionInterface
         ] = RedisEnsureSingleExecution(redis_client=redis_client, lock_timeout=60),
         redis_client=redis_client,
+        on_stale_event: Optional[Callable[[str, Dict], Awaitable[None]]] = None,
     ):
         super().__init__()
         self.producer = producer
@@ -180,6 +182,7 @@ class BaseProducer(GracefulShutdownMixin):
         self.ensure_single_execution = ensure_single_execution
         self.redis_client = redis_client
         self.pattern = f"{self.KEY_PREFIX}:{self._instance_id}:*"
+        self.on_stale_event = on_stale_event
 
     def _make_status_key(self, event_id: str) -> str:
         # track 키를 메시지에 포함시켜 consumer→redis 트래킹에 사용
@@ -262,13 +265,8 @@ class BaseProducer(GracefulShutdownMixin):
                 # 해시에서 timestamp, is_idempotent, data(json) 등을 꺼내기
                 ts = int(raw_hash.get("assigned_at"))
                 age = now - ts
-                if age <= 60:
-                    continue
-                else:
-                    # TODO complete이 아닐 경우에 어떻게 처리할건지 명시해야함
-                    logger.debug(
-                        f"[{key}] 작업이 {age}초 지났지만 완료되지 않았습니다."
-                    )
+                if age > 60 and self.on_stale_event:
+                    await self.on_stale_event(key, raw_hash)
 
         except Exception as e:
             logger.exception(
