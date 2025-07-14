@@ -7,6 +7,7 @@ from hypurrquant_fastapi_core.exception import (
     MarketDataException,
     NonJsonResponseIgnoredException,
 )
+from datetime import datetime, timedelta
 
 
 from typing import List, Dict
@@ -56,12 +57,16 @@ class HyqFetch:
         sector=None,
     )
 
-    def __init__(self):
+    def __init__(self, evm_cache_ttl: timedelta = timedelta(minutes=10)):
         self._market_datas: List[MarketData] = []
         self._coin_list = []
         self._coin_by_Tname: Dict[str, MarketData] = None
         self._Tname_by_coin: Dict[str, MarketData] = None
         self._lock = threading.RLock()  # 재진입 가능한 락
+        self._async_lock = asyncio.Lock()
+        self._evm_cache = None
+        self._cache_timestamp = None
+        self._cache_ttl = evm_cache_ttl
 
     @property
     def coin_list(self):
@@ -136,6 +141,20 @@ class HyqFetch:
                 logger.error(f"{coin} is not in market data")
                 raise MarketDataException(f"{coin} is not in market data")
             return data
+
+    async def get_data_having_evm_contract(self) -> List[MarketData]:
+        async with self._async_lock:
+            now = datetime.now()
+            if (
+                self._evm_cache is None
+                or self._cache_timestamp is None
+                or now - self._cache_timestamp > self._cache_ttl
+            ):
+                # 실제 필터링 로직 (market_datas는 동기/비동기 혼용 주의)
+                self._evm_cache = [d for d in self._market_datas if d.evmContract]
+                self._cache_timestamp = now
+
+            return self._evm_cache
 
 
 hyqFetch = HyqFetch()
