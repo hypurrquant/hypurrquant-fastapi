@@ -45,6 +45,20 @@ symbol_table: Dict[str, SymbolConfig] = {
             MarketType.SPOT: "HYPE",
         },
     ),
+    "PUMP": SymbolConfig(
+        display="PUMP",
+        internal={
+            MarketType.PERP: "PUMP",
+            MarketType.SPOT: "UPUMP",
+        },
+    ),
+    "FARTCOIN": SymbolConfig(
+        display="FARTCOIN",
+        internal={
+            MarketType.PERP: "FARTCOIN",
+            MarketType.SPOT: "UFART",
+        },
+    ),
 }
 
 
