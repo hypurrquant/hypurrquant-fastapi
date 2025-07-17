@@ -55,7 +55,7 @@ class CopytradingRedisKey(Enum):
 
 
 class TelegramRedisKey(Enum):
-    SOLANA_BRIDGE_ADDRESS = (
-        f"{PROJECT_NAME}:{Service.TELEGRAM.value}:solana_bridge_address:{{address}}"
+    BRIDGE_ADDRESS = (
+        f"{PROJECT_NAME}:{Service.TELEGRAM.value}:bridge_address:{{chain}}:{{address}}"
     )
-    SOLANA_BRIDGE_FEE = f"{PROJECT_NAME}:{Service.TELEGRAM.value}:solana_bridge_fee"
+    BRIDGE_FEE = f"{PROJECT_NAME}:{Service.TELEGRAM.value}:bridge_fee:{{chain}}"
