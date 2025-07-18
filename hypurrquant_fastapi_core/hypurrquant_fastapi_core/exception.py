@@ -595,6 +595,21 @@ class UsdTransferSmmllerThanFeeException(AccountServerException):
         super().__init__(message, 3020, api_response, status_code)
 
 
+class ShouldBeDexLpVaultAccountException(AccountServerException):
+    """
+    AccountDetail이 DEX LP Vault 계좌가 아닌 경우 발생한다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 3021, api_response)
+
+
 class InsufficientBalanceException(AccountServerException):
     """
     출금하는 금액이 10USDC 미만인 경우에 발생한다.
@@ -803,6 +818,55 @@ class InvalidFilterException(StrategyServerException):
             api_response (Optional[Any]): The APIResponse object.
         """
         super().__init__(message, 7000, api_response)
+
+
+class DexException(BaseOrderException):
+    pass
+
+
+class NoSuchPoolException(DexException):
+    """
+    DEX에서 해당 풀을 찾을 수 없는 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 8000, api_response)
+
+
+class NoSuchDexException(DexException):
+    """
+    DEX가 존재하지 않는 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 8001, api_response)
+
+
+class NoLpVaultJobException(DexException):
+    """
+    DEX LP Vault Job이 존재하지 않는 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 8002, api_response)
 
 
 class DataException(BaseOrderException):

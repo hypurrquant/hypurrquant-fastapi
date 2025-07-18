@@ -17,3 +17,4 @@ class Service(Enum):
     TELEGRAM = "telegram"
     ALARM = "alarm"
     COPYTRADING = "copytrading"
+    DEX = "dex"

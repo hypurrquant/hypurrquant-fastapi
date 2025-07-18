@@ -50,6 +50,10 @@ class AlarmKafkaTopic(Enum):
     )
 
 
+class DexKafkaTopic(Enum):
+    LP_VAULT_REGISTER = f"{PROJECT_NAME}_{Service.DEX.value}_lpvault.execute.fifo"
+
+
 class CommonKafkaTopic(Enum):
     DELEGATE = (
         f"{PROJECT_NAME}_common_delegate.fifo"  # delegate 서버에서 발행하는 이벤트
