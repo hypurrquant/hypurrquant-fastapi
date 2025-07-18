@@ -239,31 +239,43 @@ class BaseProducer(GracefulShutdownMixin):
         self,
         keys: List[str],
     ):
-        """한 번에 keys 리스트에 대한 HGETALL을 파이프라이닝으로 실행하고,
-        timestamp 기준으로 60초 초과된 것만 처리."""
+        """
+        한 번에 keys 리스트에 대한 HGETALL을 파이프라이닝으로 실행하기 전,
+        TYPE 커맨드로 Hash 타입 키만 골라냅니다.
+        timestamp 기준으로 60초 초과된 것만 처리.
+        """
         try:
+            # 1) 모든 키에 대해 TYPE 명령 실행
+            types: List[str] = await asyncio.gather(
+                *(self.redis_client.type(key) for key in keys)
+            )
+            # 2) Hash 타입인 키만 필터링
+            hash_keys = [k for k, t in zip(keys, types) if t == "hash"]
+            if not hash_keys:
+                return  # 처리할 Hash 키가 없으면 바로 종료
+
+            # 3) Hash 키에 대해서만 HGETALL 파이프라인
             pipe = self.redis_client.pipeline()
-            for key in keys:
+            for key in hash_keys:
                 pipe.hgetall(key)
             results = await pipe.execute()  # List[dict[field: bytes]]
 
             now = int(time.time())
-            for key, raw_hash in zip(keys, results):
-                # 키가 만료됐거나 비어있으면 패스
+            # 4) 기존 로직: 상태 체크, 만료·완료 키 정리, stale 이벤트 호출
+            for key, raw_hash in zip(hash_keys, results):
                 logger.debug(f"[{key}] 키 처리 시작")
                 if not raw_hash:
                     logger.debug(f"[{key}] 키가 비어있음, 스킵합니다.")
                     continue
 
-                status = raw_hash.get("status")
+                status = raw_hash.get(b"status") or raw_hash.get("status")
                 if status == "completed":
-                    # 완료된 작업은 삭제
                     logger.debug(f"[{key}] 완료된 작업, 삭제합니다.")
                     await self.redis_client.delete(key)
                     continue
 
-                # 해시에서 timestamp, is_idempotent, data(json) 등을 꺼내기
-                ts = int(raw_hash.get("assigned_at"))
+                ts_bytes = raw_hash.get(b"assigned_at") or raw_hash.get("assigned_at")
+                ts = int(ts_bytes)
                 age = now - ts
                 if age > 60 and self.on_stale_event:
                     await self.on_stale_event(key, raw_hash)
