@@ -135,7 +135,7 @@ class RedisEnsureSingleExecution(EnsureSingleExecutionInterface):
 
         # 2) 비멱등인 경우 락을 걸고, 멱등인 경우 락 없이 바로 실행
         lock_ctx = (
-            self.redis_client.lock(f"{key}:lock", timeout=self.lock_timeout)
+            self.redis_client.lock(f"lock:{key}", timeout=self.lock_timeout)
             if not event_message.is_idempotent
             else nullcontext()
         )
