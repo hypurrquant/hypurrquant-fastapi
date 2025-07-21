@@ -610,6 +610,21 @@ class ShouldBeDexLpVaultAccountException(AccountServerException):
         super().__init__(response, 3021, api_response)
 
 
+class AccountTypeNotFoundException(AccountServerException):
+    """
+    계좌 타입이 존재하지 않는 경우 발생한다.
+    """
+
+    def __init__(self, response: str, api_response=None):
+        """
+        Args:
+            response (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(response, 3022, api_response)
+
+
 class InsufficientBalanceException(AccountServerException):
     """
     출금하는 금액이 10USDC 미만인 경우에 발생한다.
