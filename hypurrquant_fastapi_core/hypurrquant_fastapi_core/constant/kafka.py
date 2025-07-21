@@ -51,7 +51,8 @@ class AlarmKafkaTopic(Enum):
 
 
 class DexKafkaTopic(Enum):
-    LP_VAULT_REGISTER = f"{PROJECT_NAME}_{Service.DEX.value}_lpvault.execute.fifo"
+    LP_VAULT_REGISTER = f"{PROJECT_NAME}_{Service.DEX.value}_lpvault_execute.fifo"
+    LP_VAULT_DELETE = f"{PROJECT_NAME}_{Service.DEX.value}_lpvault_delete.fifo"
 
 
 class CommonKafkaTopic(Enum):
