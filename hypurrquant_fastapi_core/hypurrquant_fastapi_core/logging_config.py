@@ -218,3 +218,12 @@ def coroutine_logging(func):
         return await func(*args, **kwargs)
 
     return wrapper
+
+
+def set_coroutine_id(cid: str, force: bool = False):
+    """
+    코루틴 ID를 설정하는 함수.
+    :param cid: 설정할 코루틴 ID
+    """
+    if force or coroutine_id.get() == "N/A":
+        coroutine_id.set(cid)
