@@ -1,4 +1,4 @@
-from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.logging_config import configure_logging, coroutine_id
 from hypurrquant_fastapi_core.response import BaseResponse
 from hypurrquant_fastapi_core.api.exception import get_exception_by_code
 from hypurrquant_fastapi_core.exception import (
@@ -114,6 +114,9 @@ async def send_request(
     timeout: int = 10,
 ) -> BaseResponse:
     session = get_session()
+    cid = coroutine_id.get()
+    headers = headers.copy() if headers else {}
+    headers.setdefault("X-Coroutine-ID", cid)
     try:
         async with session.request(
             method=method,

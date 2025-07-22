@@ -169,6 +169,7 @@ class BaseProducer(GracefulShutdownMixin):
 
     def __init__(
         self,
+        # TODO producer가 module import 시점에 초기화가 되므로 fastapi처럼 서비스 코드가 wrapping 되면은 문제가 없지만 그렇지 않을 경우엔 get_producer로 생성되면 producer가 속한 loop와 실제 main event loop가 달라짐.
         producer: AsyncMessagingProducer = get_producer(),
         ensure_single_execution: Optional[
             EnsureSingleExecutionInterface
