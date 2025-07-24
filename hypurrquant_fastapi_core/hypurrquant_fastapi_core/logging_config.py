@@ -220,6 +220,16 @@ def coroutine_logging(func):
     return wrapper
 
 
+def force_coroutine_logging(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        # 무조건 새 UUID 발급
+        coroutine_id.set(str(uuid.uuid4()))
+        return await func(*args, **kwargs)
+
+    return wrapper
+
+
 def set_coroutine_id(cid: str, force: bool = False):
     """
     코루틴 ID를 설정하는 함수.
