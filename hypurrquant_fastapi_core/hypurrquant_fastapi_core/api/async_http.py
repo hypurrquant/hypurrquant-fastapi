@@ -181,7 +181,7 @@ async def send_request(
     except Exception as e:
         logger.error(f"예상치 못한 오류 발생: {e}", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
-        raise
+        raise e
 
 
 @retry(
