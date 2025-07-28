@@ -305,12 +305,12 @@ async def _send_request_for_external_retry(
 async def send_request_for_external(
     method: str,
     url: str,
-    retry: bool = True,
     headers: Optional[Dict[str, str]] = None,
     params: Optional[Dict[str, str]] = None,
     data: Optional[Any] = None,
     json: Optional[Dict[str, Any]] = None,
     timeout: int = 10,
+    retry: bool = True,
 ) -> Dict[str, Any]:
     """
     외부 API에 비동기 HTTP 요청을 보내는 함수.
