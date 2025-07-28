@@ -184,19 +184,7 @@ async def send_request(
         raise e
 
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(5),  # 최대 5회 재시도
-    wait=wait_exponential(multiplier=0.5, min=0.5),  # 0.5s → 1s → 2s → …
-    retry=retry_if_exception_type(
-        (
-            aiohttp.ClientConnectionError,
-            aiohttp.ClientResponseError,
-            asyncio.TimeoutError,
-        )
-    ),
-)
-async def send_request_for_external(
+async def _send_request_for_external(
     method: str,
     url: str,
     headers: Optional[Dict[str, str]] = None,
@@ -271,3 +259,79 @@ async def send_request_for_external(
         logger.error(f"예상치 못한 오류 발생: {str(e)}", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
         raise e
+
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(5),  # 최대 5회 재시도
+    wait=wait_exponential(multiplier=0.5, min=0.5),  # 0.5s → 1s → 2s → …
+    retry=retry_if_exception_type(
+        (
+            aiohttp.ClientConnectionError,
+            aiohttp.ClientResponseError,
+            asyncio.TimeoutError,
+        )
+    ),
+)
+async def _send_request_for_external_retry(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, str]] = None,
+    data: Optional[Any] = None,
+    json: Optional[Dict[str, Any]] = None,
+    timeout: int = 10,
+) -> Dict[str, Any]:
+    """
+    외부 API에 비동기 HTTP 요청을 보내는 함수.
+
+    Args:
+        method (str): HTTP 메서드 (GET, POST 등).
+        url (str): 요청 URL.
+        headers (Optional[Dict[str, str]]): 요청 헤더.
+        params (Optional[Dict[str, str]]): URL 쿼리 파라미터.
+        data (Optional[Any]): 요청 바디 (form data 등).
+        json (Optional[Dict[str, Any]]): 요청 바디 (JSON 데이터).
+        timeout (int): 요청 타임아웃 (초 단위).
+
+    Returns:
+        Dict[str, Any]: JSON 응답 데이터.
+    """
+    return await _send_request_for_external(
+        method, url, headers, params, data, json, timeout
+    )
+
+
+async def send_request_for_external(
+    method: str,
+    url: str,
+    retry: bool = True,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, str]] = None,
+    data: Optional[Any] = None,
+    json: Optional[Dict[str, Any]] = None,
+    timeout: int = 10,
+) -> Dict[str, Any]:
+    """
+    외부 API에 비동기 HTTP 요청을 보내는 함수.
+
+    Args:
+        method (str): HTTP 메서드 (GET, POST 등).
+        url (str): 요청 URL.
+        headers (Optional[Dict[str, str]]): 요청 헤더.
+        params (Optional[Dict[str, str]]): URL 쿼리 파라미터.
+        data (Optional[Any]): 요청 바디 (form data 등).
+        json (Optional[Dict[str, Any]]): 요청 바디 (JSON 데이터).
+        timeout (int): 요청 타임아웃 (초 단위).
+
+    Returns:
+        Dict[str, Any]: JSON 응답 데이터.
+    """
+    if retry:
+        return await _send_request_for_external_retry(
+            method, url, headers, params, data, json, timeout
+        )
+    else:
+        return await _send_request_for_external(
+            method, url, headers, params, data, json, timeout
+        )
