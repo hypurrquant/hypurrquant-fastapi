@@ -248,11 +248,11 @@ async def _send_request_for_external(
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except asyncio.TimeoutError as e:
-        logger.error("타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True)
+        logger.info("타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except aiohttp.ClientError as e:
-        logger.error(f"기타 클라이언트 오류 발생: {str(e)}", exc_info=True)
+        logger.info(f"4xx 에러 발생: {str(e)}", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except Exception as e:
