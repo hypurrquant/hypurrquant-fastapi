@@ -194,6 +194,8 @@ class BaseProducer(GracefulShutdownMixin):
         topic: str,
         payload: dict,
         is_idempotent: bool = False,
+        *args: Any,
+        **kwargs: Any,
     ) -> RedisEventMessage:
         event_id = uuid4().hex
         status_key = self._make_status_key(event_id)
@@ -208,7 +210,7 @@ class BaseProducer(GracefulShutdownMixin):
         )
 
         # 2) Kafka에 발행
-        await self.producer.send_message(topic, asdict(msg))
+        await self.producer.send_message(topic, asdict(msg), *args, **kwargs)
 
         # 3) Redis에 상태 키 생성
         await self.ensure_single_execution.ensure_single_production(msg)

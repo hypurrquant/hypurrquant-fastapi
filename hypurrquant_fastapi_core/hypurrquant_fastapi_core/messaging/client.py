@@ -92,10 +92,10 @@ class SQSMessagingProducer(AsyncMessagingProducer):
         self,
         destination: str,
         message: Any,
-        message_group_id: str = "default-groupd",
         *args,
         **kwargs,
     ):
+        message_group_id = kwargs.get("message_group_id", "default-group")
         try:
             if "fifo" in destination:
                 # FIFO 큐인 경우 MessageGroupId와 MessageDeduplicationId 필요
