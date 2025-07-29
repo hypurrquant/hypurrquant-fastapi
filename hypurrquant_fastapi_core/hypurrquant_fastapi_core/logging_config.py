@@ -219,7 +219,7 @@ def force_coroutine_logging(func):
     return wrapper
 
 
-def coroutine_logging_cm(func):
+def coroutine_logging(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # 이미 UUID가 세팅되어 있지 않다면
