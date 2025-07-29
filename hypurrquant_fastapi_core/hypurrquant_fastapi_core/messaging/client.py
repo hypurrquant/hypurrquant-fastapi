@@ -247,6 +247,7 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
     async def stop(self):
         await self.consumer.stop()
 
+    @force_coroutine_logging
     @asynccontextmanager
     async def process_message(self, msg):
         """
