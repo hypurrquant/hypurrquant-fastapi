@@ -247,8 +247,8 @@ class KafkaMessagingConsumer(AsyncMessagingConsumer):
     async def stop(self):
         await self.consumer.stop()
 
-    @force_coroutine_logging
     @asynccontextmanager
+    @force_coroutine_logging
     async def process_message(self, msg):
         """
         Kafka 메시지 처리 컨텍스트 매니저.
@@ -337,8 +337,8 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         await asyncio.sleep(1)
         await self.start()
 
-    @force_coroutine_logging
     @asynccontextmanager
+    @force_coroutine_logging
     async def process_message(self, message):
         """
         SQS 메시지 처리 컨텍스트 매니저.
