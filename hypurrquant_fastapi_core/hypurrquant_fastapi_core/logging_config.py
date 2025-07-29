@@ -209,23 +209,23 @@ def configure_logging(file_path):
     return logger
 
 
-def force_coroutine_logging(func):
+def coroutine_logging(func):
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        # 무조건 새 UUID 발급
-        coroutine_id.set(str(uuid.uuid4()))
-        return func(*args, **kwargs)  # await 없이 그대로 반환
+    async def wrapper(*args, **kwargs):
+        # 이미 코루틴에서 UUID가 설정되어 있지 않은 경우에만 초기화
+        if coroutine_id.get() == "N/A":
+            coroutine_id.set(str(uuid.uuid4()))
+        return await func(*args, **kwargs)
 
     return wrapper
 
 
-def coroutine_logging(func):
+def force_coroutine_logging(func):
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        # 이미 UUID가 세팅되어 있지 않다면
-        if coroutine_id.get() == "N/A":
-            coroutine_id.set(str(uuid.uuid4()))
-        return func(*args, **kwargs)  # await 없이 그대로 반환
+    async def wrapper(*args, **kwargs):
+        # 무조건 새 UUID 발급
+        coroutine_id.set(str(uuid.uuid4()))
+        return await func(*args, **kwargs)
 
     return wrapper
 
