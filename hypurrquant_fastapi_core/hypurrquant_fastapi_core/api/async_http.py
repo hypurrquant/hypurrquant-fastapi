@@ -237,7 +237,7 @@ async def _send_request_for_external(
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except aiohttp.ClientResponseError as e:
-        logger.error("응답 오류 발생: 잘못된 응답을 받았습니다.", exc_info=True)
+        logger.info("4xx - 5xx error.", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except aiohttp.ClientPayloadError as e:
@@ -248,11 +248,11 @@ async def _send_request_for_external(
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except asyncio.TimeoutError as e:
-        logger.info("타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True)
+        logger.error("타임아웃 오류 발생: 요청 시간이 초과되었습니다.", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except aiohttp.ClientError as e:
-        logger.info(f"4xx 에러 발생: {str(e)}", exc_info=True)
+        logger.error(f"4xx 에러 발생: {str(e)}", exc_info=True)
         log_request_error(method, url, headers, params, data, json, e)
         raise e
     except Exception as e:
