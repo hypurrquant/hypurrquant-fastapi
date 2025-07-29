@@ -1,4 +1,6 @@
-from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.logging_config import (
+    configure_logging,
+)
 from hypurrquant_fastapi_core.api.async_http import send_request_for_external
 from hypurrquant_fastapi_core.rate_limited import (
     hl_rate_limited,

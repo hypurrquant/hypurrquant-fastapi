@@ -1,4 +1,7 @@
-from hypurrquant_fastapi_core.logging_config import configure_logging
+from hypurrquant_fastapi_core.logging_config import (
+    configure_logging,
+    force_coroutine_logging,
+)
 from hypurrquant_fastapi_core.singleton import singleton
 from types_aiobotocore_sqs.client import SQSClient
 from contextlib import asynccontextmanager
@@ -333,6 +336,7 @@ class SQSMessagingConsumer(AsyncMessagingConsumer):
         await asyncio.sleep(1)
         await self.start()
 
+    @force_coroutine_logging
     @asynccontextmanager
     async def process_message(self, message):
         """
