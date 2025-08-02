@@ -884,6 +884,21 @@ class NoLpVaultJobException(DexException):
         super().__init__(message, 8002, api_response)
 
 
+class NoSuchDexProtocolException(DexException):
+    """
+    지원하지 않는 DEX 프로토콜인 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 8003, api_response)
+
+
 class DataException(BaseOrderException):
     pass
 
