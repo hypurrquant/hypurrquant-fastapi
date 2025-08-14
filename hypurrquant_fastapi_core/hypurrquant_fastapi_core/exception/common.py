@@ -33,3 +33,18 @@ class UnhandledErrorException(BaseOrderException):
             api_response (Optional[Any]): The APIResponse object.
         """
         super().__init__(message, 9999, api_response)
+
+
+class TooHighGasFeeException(CommonException):
+    """
+    가스 요금이 너무 높은 경우 발생한다.
+    """
+
+    def __init__(self, message: str, api_response=None):
+        """
+        Args:
+            message (str): Error message from APIResponse.
+            code (int): Error code.
+            api_response (Optional[Any]): The APIResponse object.
+        """
+        super().__init__(message, 10000, api_response)

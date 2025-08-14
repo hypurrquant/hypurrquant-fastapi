@@ -334,7 +334,9 @@ class BaseConsumer:
     async def _consume(self, consumer: AsyncMessagingConsumer):
         logger.debug(f"[{self.TOPIC}] Consumer 시작: {consumer}")
         await consumer.start()
-        async for msg in consumer.consume_messages(max_number_of_messages=1):
+        async for msg in consumer.consume_messages(
+            max_number_of_messages=1
+        ):  # TODO max_number_of_messages를 생성자 인자로 받아야함.
             try:
                 if self.enable_deduplication:
                     logger.debug(f"[{self.TOPIC}] 중복 방지 작업 수행")
