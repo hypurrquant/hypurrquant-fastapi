@@ -306,6 +306,7 @@ class BaseConsumer:
         self,
         topic: str,
         consumer_size: int,
+        *,
         enable_deduplication: bool = False,
         ensure_single_execution: Optional[
             EnsureSingleExecutionInterface
