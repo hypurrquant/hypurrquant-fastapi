@@ -1,6 +1,5 @@
 from hypurrquant_fastapi_core.logging_config import (
     configure_logging,
-    force_coroutine_logging,
 )
 from hypurrquant_fastapi_core.singleton import singleton
 from types_aiobotocore_sqs.client import SQSClient
@@ -77,6 +76,7 @@ class SQSMessagingProducer(AsyncMessagingProducer):
             self.client = await self.session.client(
                 "sqs", region_name=self.region_name
             ).__aenter__()
+            logger.info("SQS client started")
 
     async def stop(self):
         if self.client:
