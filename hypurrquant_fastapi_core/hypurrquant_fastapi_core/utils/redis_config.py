@@ -8,7 +8,12 @@ import os
 REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT")
 
-redis_client = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-redis_client_sync = sync_redis.Redis(
-    host=REDIS_HOST, port=REDIS_PORT, decode_responses=True
-)
+PROFILE = os.getenv("PROFILE", "prod")
+
+common_kwargs = {"host": REDIS_HOST, "port": REDIS_PORT, "decode_responses": True}
+
+if PROFILE == "prod":
+    common_kwargs["ssl"] = True
+
+redis_client = aioredis.Redis(**common_kwargs)
+redis_client_sync = sync_redis.Redis(**common_kwargs)
